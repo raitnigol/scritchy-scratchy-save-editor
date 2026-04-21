@@ -4,49 +4,134 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scritchy Scratchy Save Editor</title>
+  <meta name="description" content="Offline Scritchy Scratchy save editor. Decode, edit, and re-encode exported saves locally in your browser." />
+  <meta name="theme-color" content="#ffffff" />
+  <meta property="og:title" content="Scritchy Scratchy Save Editor" />
+  <meta property="og:description" content="Offline browser-based save editor for Scritchy Scratchy exports." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Scritchy Scratchy Save Editor" />
+  <meta name="twitter:description" content="Offline browser-based save editor for Scritchy Scratchy exports." />
+
+  <link rel="icon" type="image/x-icon" href="favicons/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicons/android-chrome-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="favicons/android-chrome-512x512.png">
+
   <style>
     :root {
       --bg: #0f1115;
       --panel: #171a21;
       --panel-2: #1f2430;
+      --panel-3: #141820;
       --text: #e6e6e6;
       --muted: #a8b0bd;
       --accent: #6ea8fe;
       --good: #62d26f;
       --bad: #ff6b6b;
+      --warn: #ffd166;
       --border: #303646;
       --input: #0f131b;
+      --shadow: rgba(0,0,0,0.18);
     }
+
+    body.light {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --panel-2: #eef3fb;
+      --panel-3: #f7f9fd;
+      --text: #151922;
+      --muted: #566070;
+      --accent: #2f6fed;
+      --good: #0d8f3c;
+      --bad: #d93b3b;
+      --warn: #9a6b00;
+      --border: #d7deea;
+      --input: #ffffff;
+      --shadow: rgba(20,30,50,0.08);
+    }
+
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.45;
+      transition: background 0.2s ease, color 0.2s ease;
     }
+
     .wrap {
-      max-width: 1100px;
+      max-width: 1180px;
       margin: 0 auto;
       padding: 24px;
     }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
     h1, h2, h3 {
       margin: 0 0 12px;
       line-height: 1.2;
     }
+
     p { color: var(--muted); }
+
+    .hero {
+      background: linear-gradient(180deg, var(--panel), var(--panel-3));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px var(--shadow);
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      max-width: 880px;
+    }
+
+    .notice-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .notice {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: var(--panel-3);
+    }
+
+    .notice strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: 1.2fr 1fr;
       gap: 20px;
     }
+
     .panel {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      box-shadow: 0 10px 30px var(--shadow);
     }
+
     textarea {
       width: 100%;
       min-height: 260px;
@@ -59,6 +144,7 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 13px;
     }
+
     input, select {
       width: 100%;
       background: var(--input);
@@ -68,30 +154,39 @@
       padding: 10px 12px;
       font-size: 14px;
     }
+
+    input[type="file"] {
+      padding: 8px;
+    }
+
     label {
       display: block;
       margin: 0 0 6px;
       color: var(--muted);
       font-size: 13px;
     }
+
     .row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
       margin-bottom: 12px;
     }
+
     .row-3 {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 12px;
       margin-bottom: 12px;
     }
+
     .buttons {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       margin-top: 14px;
     }
+
     button {
       background: var(--panel-2);
       color: var(--text);
@@ -101,38 +196,105 @@
       cursor: pointer;
       font-size: 14px;
     }
+
     button.primary {
       background: var(--accent);
-      color: #08111f;
+      color: white;
       border-color: transparent;
       font-weight: 600;
     }
-    button:hover { filter: brightness(1.06); }
+
+    button:hover { filter: brightness(1.04); }
+
     .status {
       margin-top: 12px;
       padding: 10px 12px;
       border-radius: 10px;
       font-size: 14px;
       display: none;
+      white-space: pre-wrap;
     }
+
     .status.ok { display: block; background: rgba(98,210,111,0.12); color: var(--good); border: 1px solid rgba(98,210,111,0.35); }
     .status.err { display: block; background: rgba(255,107,107,0.12); color: var(--bad); border: 1px solid rgba(255,107,107,0.35); }
+    .status.warn { display: block; background: rgba(255,209,102,0.12); color: var(--warn); border: 1px solid rgba(255,209,102,0.35); }
+
     .tiny {
       font-size: 12px;
       color: var(--muted);
     }
+
     .section-spacer { margin-top: 20px; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    details {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-3);
+      margin-top: 14px;
+      overflow: hidden;
+    }
+
+    details summary {
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 600;
+    }
+
+    details > div {
+      padding: 0 14px 14px;
+    }
+
+    .footer {
+      margin-top: 22px;
+      padding: 16px 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
     @media (max-width: 900px) {
-      .grid { grid-template-columns: 1fr; }
-      .row, .row-3 { grid-template-columns: 1fr; }
+      .grid, .notice-row, .row, .row-3 {
+        grid-template-columns: 1fr;
+      }
+
+      textarea {
+        min-height: 220px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Scritchy Scratchy Save Editor</h1>
-    <p>Paste the exported save string, decode it, edit a few common fields, then export a new Base64 save string.</p>
+    <div class="topbar">
+      <div>
+        <h1>Scritchy Scratchy Save Editor</h1>
+        <p>Decode, inspect, edit, and re-encode exported saves in the browser.</p>
+      </div>
+      <div class="buttons" style="margin-top:0">
+        <button id="themeToggle">Toggle theme</button>
+      </div>
+    </div>
+
+    <section class="hero">
+      <h2>Local-only tool</h2>
+      <p>This editor runs entirely in your browser. Your save data is not uploaded anywhere by this page. Paste a Base64 export, decode it, edit quick fields or raw JSON, then encode it again for import back into the game.</p>
+
+      <div class="notice-row">
+        <div class="notice">
+          <strong>Safer workflow</strong>
+          Keep one untouched export as backup before importing modified saves.
+        </div>
+        <div class="notice">
+          <strong>Unofficial tool</strong>
+          This is a fan-made editor. Broken or inconsistent values can produce invalid saves.
+        </div>
+      </div>
+    </section>
 
     <div class="grid">
       <div class="panel">
@@ -144,17 +306,45 @@
           <button class="primary" id="decodeBtn">Decode save</button>
           <button id="encodeBtn">Encode current data</button>
           <button id="copyBtn">Copy encoded output</button>
-          <button id="loadExampleBtn">Load your sample</button>
           <button id="clearBtn">Clear</button>
         </div>
 
         <div id="status" class="status"></div>
 
         <div class="section-spacer">
+          <h3>File tools</h3>
+          <div class="row">
+            <div>
+              <label for="saveFileInput">Load encoded save from file</label>
+              <input id="saveFileInput" type="file" accept=".txt,.save,.json,text/plain,application/json" />
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <div class="buttons" style="margin-top:0">
+                <button id="downloadEncodedBtn">Download encoded save</button>
+                <button id="downloadJsonBtn">Download decoded JSON</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-spacer">
           <label for="decodedJson">Decoded JSON</label>
           <textarea id="decodedJson" placeholder="Decoded JSON will appear here..."></textarea>
-          <p class="tiny">You can edit the raw JSON directly too. Encoding uses whatever is currently in this box.</p>
+          <p class="tiny">You can edit the raw JSON directly. Encoding uses whatever is currently in this box.</p>
         </div>
+
+        <details>
+          <summary>Backup / restore</summary>
+          <div>
+            <p class="tiny">The editor can keep one local browser backup of the original encoded save.</p>
+            <div class="buttons">
+              <button id="backupBtn">Save browser backup</button>
+              <button id="restoreBackupBtn">Restore browser backup</button>
+              <button id="clearBackupBtn">Delete browser backup</button>
+            </div>
+          </div>
+        </details>
       </div>
 
       <div class="panel">
@@ -236,6 +426,7 @@
 
         <div class="buttons">
           <button class="primary" id="applyFieldsBtn">Apply fields to JSON</button>
+          <button id="validateBtn">Validate JSON</button>
           <button id="maxMoneyBtn">Set money to 1e15</button>
           <button id="addPrestigeBtn">+100 prestige currency</button>
         </div>
@@ -244,8 +435,25 @@
           <h3>Detected summary</h3>
           <p class="tiny mono" id="summary">No save decoded yet.</p>
         </div>
+
+        <details>
+          <summary>Danger zone</summary>
+          <div>
+            <p class="tiny">Use these only if you understand the consequences.</p>
+            <div class="buttons">
+              <button id="resetDeathsBtn">Reset deaths to 0</button>
+              <button id="clearLoansBtn">Set loans to 0</button>
+              <button id="boostTokensBtn">Set tokens to 999</button>
+            </div>
+          </div>
+        </details>
       </div>
     </div>
+
+    <footer class="footer">
+      <div>Unofficial fan-made tool. Use at your own risk.</div>
+      <div style="margin-top:6px">Designed for local browser use on GitHub Pages.</div>
+    </footer>
   </div>
 
   <script>
@@ -272,9 +480,12 @@
       scratchBotStrength: $("scratchBotStrength")
     };
 
-    function setStatus(message, ok = true) {
+    const BACKUP_KEY = "scritchy_scratchy_save_backup";
+    const THEME_KEY = "scritchy_scratchy_theme";
+
+    function setStatus(message, type = "ok") {
       ids.status.textContent = message;
-      ids.status.className = "status " + (ok ? "ok" : "err");
+      ids.status.className = "status " + type;
     }
 
     function clearStatus() {
@@ -306,7 +517,8 @@
 
     function getNested(obj, path, fallback = "") {
       try {
-        return path.split(".").reduce((acc, key) => acc[key], obj) ?? fallback;
+        const value = path.split(".").reduce((acc, key) => acc[key], obj);
+        return value ?? fallback;
       } catch {
         return fallback;
       }
@@ -374,6 +586,7 @@
       const jackpots = Array.isArray(getNested(obj, "layerOne.jackpotsGotten", [])) ? getNested(obj, "layerOne.jackpotsGotten", []).length : 0;
       const superJackpots = Array.isArray(getNested(obj, "layerOne.superJackpotsGotten", [])) ? getNested(obj, "layerOne.superJackpotsGotten", []).length : 0;
       const money = getNested(obj, "layerOne.money", "n/a");
+
       ids.summary.textContent =
         `gameVersion=${obj.gameVersion ?? "?"}\n` +
         `saveVersion=${obj.saveVersion ?? "?"}\n` +
@@ -387,6 +600,29 @@
         `superJackpots=${superJackpots}`;
     }
 
+    function validateSaveObject(obj) {
+      const errors = [];
+
+      if (!obj || typeof obj !== "object") {
+        errors.push("Top level value is not an object.");
+        return errors;
+      }
+
+      if (!("saveVersion" in obj)) errors.push("Missing key: saveVersion");
+      if (!("gameVersion" in obj)) errors.push("Missing key: gameVersion");
+      if (!("layerOne" in obj) || typeof obj.layerOne !== "object") errors.push("Missing object: layerOne");
+      if (!Number.isFinite(Number(getNested(obj, "layerOne.money", NaN)))) errors.push("layerOne.money must be a valid number.");
+      if (!Number.isFinite(Number(obj.playedTime))) errors.push("playedTime must be a valid number.");
+      if (!Number.isFinite(Number(obj.prestigeCount))) errors.push("prestigeCount must be a valid number.");
+      if (!Number.isFinite(Number(obj.prestigeCurrency))) errors.push("prestigeCurrency must be a valid number.");
+      if (!Number.isFinite(Number(obj.currentAct))) errors.push("currentAct must be a valid number.");
+      if (!Number.isFinite(Number(obj.deathCount))) errors.push("deathCount must be a valid number.");
+      if (!Number.isFinite(Number(obj.loanCount))) errors.push("loanCount must be a valid number.");
+      if (!Number.isFinite(Number(obj.tokens))) errors.push("tokens must be a valid number.");
+
+      return errors;
+    }
+
     function decodeSave() {
       clearStatus();
       try {
@@ -396,9 +632,15 @@
         const obj = JSON.parse(jsonText);
         putJsonInEditor(obj);
         fillQuickFields(obj);
-        setStatus("Save decoded successfully.");
+
+        const errors = validateSaveObject(obj);
+        if (errors.length) {
+          setStatus("Decoded, but validation found issues:\\n- " + errors.join("\\n- "), "warn");
+        } else {
+          setStatus("Save decoded successfully.");
+        }
       } catch (err) {
-        setStatus("Decode failed: " + err.message, false);
+        setStatus("Decode failed: " + err.message, "err");
       }
     }
 
@@ -406,12 +648,18 @@
       clearStatus();
       try {
         const obj = getJsonFromEditor();
+        const errors = validateSaveObject(obj);
+        if (errors.length) {
+          setStatus("Encoding blocked. Fix these issues first:\\n- " + errors.join("\\n- "), "err");
+          return;
+        }
+
         const encoded = encodeBase64Unicode(JSON.stringify(obj));
         ids.saveInput.value = encoded;
         renderSummary(obj);
         setStatus("Save encoded successfully.");
       } catch (err) {
-        setStatus("Encode failed: " + err.message, false);
+        setStatus("Encode failed: " + err.message, "err");
       }
     }
 
@@ -422,22 +670,94 @@
         applyQuickFields(obj);
         putJsonInEditor(obj);
         renderSummary(obj);
-        setStatus("Fields applied to JSON.");
+
+        const errors = validateSaveObject(obj);
+        if (errors.length) {
+          setStatus("Fields applied, but validation found issues:\\n- " + errors.join("\\n- "), "warn");
+        } else {
+          setStatus("Fields applied to JSON.");
+        }
       } catch (err) {
-        setStatus("Could not apply fields: " + err.message, false);
+        setStatus("Could not apply fields: " + err.message, "err");
       }
+    }
+
+    function downloadFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function saveBackup() {
+      const value = ids.saveInput.value.trim();
+      if (!value) {
+        setStatus("Nothing to back up yet.", "warn");
+        return;
+      }
+      localStorage.setItem(BACKUP_KEY, value);
+      setStatus("Browser backup saved.");
+    }
+
+    function restoreBackup() {
+      const backup = localStorage.getItem(BACKUP_KEY);
+      if (!backup) {
+        setStatus("No browser backup found.", "warn");
+        return;
+      }
+      ids.saveInput.value = backup;
+      decodeSave();
+      setStatus("Browser backup restored.");
+    }
+
+    function clearBackup() {
+      localStorage.removeItem(BACKUP_KEY);
+      setStatus("Browser backup deleted.");
+    }
+
+    function setTheme(theme) {
+      document.body.classList.toggle("light", theme === "light");
+      localStorage.setItem(THEME_KEY, theme);
+    }
+
+    function initTheme() {
+      const stored = localStorage.getItem(THEME_KEY);
+      if (stored === "light" || stored === "dark") {
+        setTheme(stored);
+        return;
+      }
+      setTheme("dark");
     }
 
     $("decodeBtn").addEventListener("click", decodeSave);
     $("encodeBtn").addEventListener("click", encodeSave);
     $("applyFieldsBtn").addEventListener("click", applyFields);
 
+    $("validateBtn").addEventListener("click", () => {
+      try {
+        const obj = getJsonFromEditor();
+        const errors = validateSaveObject(obj);
+        if (errors.length) {
+          setStatus("Validation found issues:\\n- " + errors.join("\\n- "), "warn");
+        } else {
+          setStatus("Validation passed.");
+        }
+      } catch (err) {
+        setStatus("Validation failed: " + err.message, "err");
+      }
+    });
+
     $("copyBtn").addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(ids.saveInput.value);
         setStatus("Encoded save copied to clipboard.");
       } catch (err) {
-        setStatus("Copy failed: " + err.message, false);
+        setStatus("Copy failed: " + err.message, "err");
       }
     });
 
@@ -453,6 +773,42 @@
       clearStatus();
     });
 
+    $("downloadEncodedBtn").addEventListener("click", () => {
+      const value = ids.saveInput.value.trim();
+      if (!value) {
+        setStatus("No encoded save to download.", "warn");
+        return;
+      }
+      downloadFile("scritchy-scratchy-save.txt", value, "text/plain;charset=utf-8");
+      setStatus("Encoded save downloaded.");
+    });
+
+    $("downloadJsonBtn").addEventListener("click", () => {
+      try {
+        const obj = getJsonFromEditor();
+        downloadFile("scritchy-scratchy-save.json", JSON.stringify(obj, null, 2), "application/json;charset=utf-8");
+        setStatus("Decoded JSON downloaded.");
+      } catch (err) {
+        setStatus("Could not download JSON: " + err.message, "err");
+      }
+    });
+
+    $("saveFileInput").addEventListener("change", async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        ids.saveInput.value = text.trim();
+        setStatus("File loaded into the encoded save box.");
+      } catch (err) {
+        setStatus("Could not read file: " + err.message, "err");
+      }
+    });
+
+    $("backupBtn").addEventListener("click", saveBackup);
+    $("restoreBackupBtn").addEventListener("click", restoreBackup);
+    $("clearBackupBtn").addEventListener("click", clearBackup);
+
     $("maxMoneyBtn").addEventListener("click", () => {
       ids.money.value = "1000000000000000";
     });
@@ -462,12 +818,27 @@
       ids.prestigeCurrency.value = String(current + 100);
     });
 
-    const sample = `ewogICJzYXZlVmVyc2lvbiI6ICIwLjEiLAogICJnYW1lVmVyc2lvbiI6ICIxLjAuMzBkIiwKICAidGltZXN0YW1wIjogMTc3Njc5ODQzNTc0OSwKICAicGxheWVkVGltZSI6IDE2NjE5Mjc0LAogICJsYXllck9uZSI6IHsKICAgICJtb25leSI6IDgyNTM1OTg3MzQ4NS4wLAogICAgInRpbWVTcGVudEluVGhpc1ByZXN0aWdlIjogMTM0MS43MDg3NCwKICAgICJ0aWNrZXRQcm9ncmVzc2lvbkRpY3QiOiB7CiAgICAgICJMb2FuIjogewogICAgICAgICJpZCI6ICJMb2FuIiwKICAgICAgICAieHAiOiAwLAogICAgICAgICJsZXZlbCI6IDAKICAgICAgfSwKICAgICAgIkRheSBKb2IiOiB7CiAgICAgICAgImlkIjogIkRheSBKb2IiLAogICAgICAgICJ4cCI6IDAsCiAgICAgICAgImxldmVsIjogMAogICAgICB9LAogICAgICAiVHdvIFdpbiI6IHsKICAgICAgICAiaWQiOiAiVHdvIFdpbiIsCiAgICAgICAgInhwIjogNSwKICAgICAgICAibGV2ZWwiOiAxCiAgICAgIH0sCiAgICAgICJNaW5pIFNjcmF0Y2giOiB7CiAgICAgICAgImlkIjogIk1pbmkgU2NyYXRjaCIsCiAgICAgICAgInhwIjogMiwKICAgICAgICAibGV2ZWwiOiA0CiAgICAgIH0sCiAgICAgICJBcHBsZSBUcmVlIjogewogICAgICAgICJpZCI6ICJBcHBsZSBUcmVlIiwKICAgICAgICAieHAiOiAyLAogICAgICAgICJsZXZlbCI6IDAKICAgICAgfSwKICAgICAgIlF1aWNrIENhc2giOiB7CiAgICAgICAgImlkIjogIlF1aWNrIENhc2giLAogICAgICAgICJ4cCI6IDIzLAogICAgICAgICJsZXZlbCI6IDYKICAgICAgfSwKICAgICAgIkx1Y2t5IENhdCI6IHsKICAgICAgICAiaWQiOiAiTHVja3kgQ2F0IiwKICAgICAgICAieHAiOiA4LAogICAgICAgICJsZXZlbCI6IDEKICAgICAgfSwKICAgICAgIkZpbmFsIENoYW5jZSI6IHsKICAgICAgICAiaWQiOiAiRmluYWwgQ2hhbmNlIiwKICAgICAgICAieHAiOiAwLAogICAgICAgICJsZXZlbCI6IDAKICAgICAgfSwKICAgICAgIlNhbmQgRG9sbGFycyI6IHsKICAgICAgICAiaWQiOiAiU2FuZCBEb2xsYXJzIiwKICAgICAgICAieHAiOiAzNiwKICAgICAgICAibGV2ZWwiOiA5CiAgICAgIH0sCiAgICAgICJTY3JhdGNoIE15IEJhY2siOiB7CiAgICAgICAgImlkIjogIlNjcmF0Y2ggTXkgQmFjayIsCiAgICAgICAgInhwIjogMTAsCiAgICAgICAgImxldmVsIjogNgogICAgICB9CiAgICB9LAogICAgInVwZ3JhZGVEYXRhRGljdCI6IHsKICAgICAgIlNjcmF0Y2ggTHVjayI6IHsKICAgICAgICAiaWQiOiAiU2NyYXRjaCBMdWNrIiwKICAgICAgICAiYnV5Q291bnQiOiAxNAogICAgICB9LAogICAgICAiU2NyYXRjaCBCb3QgU3BlZWQiOiB7CiAgICAgICAgImlkIjogIlNjcmF0Y2ggQm90IFNwZWVkIiwKICAgICAgICAiYnV5Q291bnQiOiAxMgogICAgICB9LAogICAgICAiU2NyYXRjaCBCb3QgQ2FwYWNpdHkiOiB7CiAgICAgICAgImlkIjogIlNjcmF0Y2ggQm90IENhcGFjaXR5IiwKICAgICAgICAiYnV5Q291bnQiOiA4CiAgICAgIH0sCiAgICAgICJTY3JhdGNoIEJvdCBTdHJlbmd0aCI6IHsKICAgICAgICAiaWQiOiAiU2NyYXRjaCBCb3QgU3RyZW5ndGgiLAogICAgICAgICJidXlDb3VudCI6IDcKICAgICAgfQogICAgfSwKICAgICJqYWNrcG90c0dvdHRlbiI6IFsKICAgICAgIlR3byBXaW4iLAogICAgICAiTWluaSBTY3JhdGNoIiwKICAgICAgIlF1aWNrIENhc2giCiAgICBdLAogICAgInN1cGVySmFja3BvdHNHb3R0ZW4iOiBbCiAgICAgICJNaW5pIFNjcmF0Y2giCiAgICBdCiAgfSwKICAicHJlc3RpZ2VDb3VudCI6IDQsCiAgInByZXN0aWdlQ3VycmVuY3kiOiA3LAogICJjdXJyZW50QWN0IjogMywKICAiZGVhdGhDb3VudCI6IDIsCiAgImxvYW5Db3VudCI6IDMsCiAgInRva2VucyI6IDMuMAp9`;
-
-    $("loadExampleBtn").addEventListener("click", () => {
-      ids.saveInput.value = sample;
-      decodeSave();
+    $("resetDeathsBtn").addEventListener("click", () => {
+      ids.deathCount.value = "0";
+      setStatus("Death count field set to 0. Apply fields to commit it.", "warn");
     });
+
+    $("clearLoansBtn").addEventListener("click", () => {
+      ids.loanCount.value = "0";
+      setStatus("Loan count field set to 0. Apply fields to commit it.", "warn");
+    });
+
+    $("boostTokensBtn").addEventListener("click", () => {
+      ids.tokens.value = "999";
+      setStatus("Tokens field set to 999. Apply fields to commit it.", "warn");
+    });
+
+    $("themeToggle").addEventListener("click", () => {
+      const next = document.body.classList.contains("light") ? "dark" : "light";
+      setTheme(next);
+    });
+
+    initTheme();
   </script>
 </body>
 </html>
