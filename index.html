@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scritchy Scratchy Save Editor</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #171a21;
+      --panel-2: #1f2430;
+      --text: #e6e6e6;
+      --muted: #a8b0bd;
+      --accent: #6ea8fe;
+      --good: #62d26f;
+      --bad: #ff6b6b;
+      --border: #303646;
+      --input: #0f131b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    h1, h2, h3 {
+      margin: 0 0 12px;
+      line-height: 1.2;
+    }
+    p { color: var(--muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    textarea {
+      width: 100%;
+      min-height: 260px;
+      resize: vertical;
+      background: var(--input);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+    input, select {
+      width: 100%;
+      background: var(--input);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+    label {
+      display: block;
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    button {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #08111f;
+      border-color: transparent;
+      font-weight: 600;
+    }
+    button:hover { filter: brightness(1.06); }
+    .status {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+    }
+    .status.ok { display: block; background: rgba(98,210,111,0.12); color: var(--good); border: 1px solid rgba(98,210,111,0.35); }
+    .status.err { display: block; background: rgba(255,107,107,0.12); color: var(--bad); border: 1px solid rgba(255,107,107,0.35); }
+    .tiny {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .section-spacer { margin-top: 20px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .row, .row-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Scritchy Scratchy Save Editor</h1>
+    <p>Paste the exported save string, decode it, edit a few common fields, then export a new Base64 save string.</p>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Save input / output</h2>
+        <label for="saveInput">Encoded save string</label>
+        <textarea id="saveInput" placeholder="Paste the exported save string here..."></textarea>
+
+        <div class="buttons">
+          <button class="primary" id="decodeBtn">Decode save</button>
+          <button id="encodeBtn">Encode current data</button>
+          <button id="copyBtn">Copy encoded output</button>
+          <button id="loadExampleBtn">Load your sample</button>
+          <button id="clearBtn">Clear</button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="section-spacer">
+          <label for="decodedJson">Decoded JSON</label>
+          <textarea id="decodedJson" placeholder="Decoded JSON will appear here..."></textarea>
+          <p class="tiny">You can edit the raw JSON directly too. Encoding uses whatever is currently in this box.</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Quick fields</h2>
+
+        <div class="row">
+          <div>
+            <label for="gameVersion">Game version</label>
+            <input id="gameVersion" type="text" />
+          </div>
+          <div>
+            <label for="saveVersion">Save version</label>
+            <input id="saveVersion" type="text" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="money">Money</label>
+            <input id="money" type="number" step="any" />
+          </div>
+          <div>
+            <label for="playedTime">Played time</label>
+            <input id="playedTime" type="number" step="1" />
+          </div>
+        </div>
+
+        <div class="row-3">
+          <div>
+            <label for="prestigeCount">Prestige count</label>
+            <input id="prestigeCount" type="number" step="1" />
+          </div>
+          <div>
+            <label for="prestigeCurrency">Prestige currency</label>
+            <input id="prestigeCurrency" type="number" step="1" />
+          </div>
+          <div>
+            <label for="tokens">Tokens</label>
+            <input id="tokens" type="number" step="any" />
+          </div>
+        </div>
+
+        <div class="row-3">
+          <div>
+            <label for="currentAct">Current act</label>
+            <input id="currentAct" type="number" step="1" />
+          </div>
+          <div>
+            <label for="deathCount">Death count</label>
+            <input id="deathCount" type="number" step="1" />
+          </div>
+          <div>
+            <label for="loanCount">Loan count</label>
+            <input id="loanCount" type="number" step="1" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="scratchLuck">Scratch Luck buyCount</label>
+            <input id="scratchLuck" type="number" step="1" />
+          </div>
+          <div>
+            <label for="scratchBotSpeed">Scratch Bot Speed buyCount</label>
+            <input id="scratchBotSpeed" type="number" step="1" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="scratchBotCapacity">Scratch Bot Capacity buyCount</label>
+            <input id="scratchBotCapacity" type="number" step="1" />
+          </div>
+          <div>
+            <label for="scratchBotStrength">Scratch Bot Strength buyCount</label>
+            <input id="scratchBotStrength" type="number" step="1" />
+          </div>
+        </div>
+
+        <div class="buttons">
+          <button class="primary" id="applyFieldsBtn">Apply fields to JSON</button>
+          <button id="maxMoneyBtn">Set money to 1e15</button>
+          <button id="addPrestigeBtn">+100 prestige currency</button>
+        </div>
+
+        <div class="section-spacer">
+          <h3>Detected summary</h3>
+          <p class="tiny mono" id="summary">No save decoded yet.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const ids = {
+      saveInput: $("saveInput"),
+      decodedJson: $("decodedJson"),
+      status: $("status"),
+      summary: $("summary"),
+      saveVersion: $("saveVersion"),
+      gameVersion: $("gameVersion"),
+      money: $("money"),
+      playedTime: $("playedTime"),
+      prestigeCount: $("prestigeCount"),
+      prestigeCurrency: $("prestigeCurrency"),
+      currentAct: $("currentAct"),
+      deathCount: $("deathCount"),
+      loanCount: $("loanCount"),
+      tokens: $("tokens"),
+      scratchLuck: $("scratchLuck"),
+      scratchBotSpeed: $("scratchBotSpeed"),
+      scratchBotCapacity: $("scratchBotCapacity"),
+      scratchBotStrength: $("scratchBotStrength")
+    };
+
+    function setStatus(message, ok = true) {
+      ids.status.textContent = message;
+      ids.status.className = "status " + (ok ? "ok" : "err");
+    }
+
+    function clearStatus() {
+      ids.status.textContent = "";
+      ids.status.className = "status";
+    }
+
+    function decodeBase64Unicode(str) {
+      const normalized = str.trim().replace(/\s+/g, "");
+      const binary = atob(normalized);
+      const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+
+    function encodeBase64Unicode(str) {
+      const bytes = new TextEncoder().encode(str);
+      let binary = "";
+      bytes.forEach(b => binary += String.fromCharCode(b));
+      return btoa(binary);
+    }
+
+    function getJsonFromEditor() {
+      return JSON.parse(ids.decodedJson.value);
+    }
+
+    function putJsonInEditor(obj) {
+      ids.decodedJson.value = JSON.stringify(obj, null, 2);
+    }
+
+    function getNested(obj, path, fallback = "") {
+      try {
+        return path.split(".").reduce((acc, key) => acc[key], obj) ?? fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function setNested(obj, path, value) {
+      const parts = path.split(".");
+      let cur = obj;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const key = parts[i];
+        if (!(key in cur) || typeof cur[key] !== "object" || cur[key] === null) {
+          cur[key] = {};
+        }
+        cur = cur[key];
+      }
+      cur[parts[parts.length - 1]] = value;
+    }
+
+    function numOrKeep(value, fallback) {
+      if (value === "" || value === null || value === undefined) return fallback;
+      const n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function fillQuickFields(obj) {
+      ids.saveVersion.value = obj.saveVersion ?? "";
+      ids.gameVersion.value = obj.gameVersion ?? "";
+      ids.money.value = getNested(obj, "layerOne.money", "");
+      ids.playedTime.value = obj.playedTime ?? "";
+      ids.prestigeCount.value = obj.prestigeCount ?? "";
+      ids.prestigeCurrency.value = obj.prestigeCurrency ?? "";
+      ids.currentAct.value = obj.currentAct ?? "";
+      ids.deathCount.value = obj.deathCount ?? "";
+      ids.loanCount.value = obj.loanCount ?? "";
+      ids.tokens.value = obj.tokens ?? "";
+      ids.scratchLuck.value = getNested(obj, "layerOne.upgradeDataDict.Scratch Luck.buyCount", "");
+      ids.scratchBotSpeed.value = getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Speed.buyCount", "");
+      ids.scratchBotCapacity.value = getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Capacity.buyCount", "");
+      ids.scratchBotStrength.value = getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount", "");
+      renderSummary(obj);
+    }
+
+    function applyQuickFields(obj) {
+      obj.saveVersion = ids.saveVersion.value;
+      obj.gameVersion = ids.gameVersion.value;
+      obj.playedTime = numOrKeep(ids.playedTime.value, obj.playedTime);
+      obj.prestigeCount = numOrKeep(ids.prestigeCount.value, obj.prestigeCount);
+      obj.prestigeCurrency = numOrKeep(ids.prestigeCurrency.value, obj.prestigeCurrency);
+      obj.currentAct = numOrKeep(ids.currentAct.value, obj.currentAct);
+      obj.deathCount = numOrKeep(ids.deathCount.value, obj.deathCount);
+      obj.loanCount = numOrKeep(ids.loanCount.value, obj.loanCount);
+      obj.tokens = numOrKeep(ids.tokens.value, obj.tokens);
+
+      setNested(obj, "layerOne.money", numOrKeep(ids.money.value, getNested(obj, "layerOne.money", 0)));
+      setNested(obj, "layerOne.upgradeDataDict.Scratch Luck.buyCount", numOrKeep(ids.scratchLuck.value, getNested(obj, "layerOne.upgradeDataDict.Scratch Luck.buyCount", 0)));
+      setNested(obj, "layerOne.upgradeDataDict.Scratch Bot Speed.buyCount", numOrKeep(ids.scratchBotSpeed.value, getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Speed.buyCount", 0)));
+      setNested(obj, "layerOne.upgradeDataDict.Scratch Bot Capacity.buyCount", numOrKeep(ids.scratchBotCapacity.value, getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Capacity.buyCount", 0)));
+      setNested(obj, "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount", numOrKeep(ids.scratchBotStrength.value, getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount", 0)));
+
+      return obj;
+    }
+
+    function renderSummary(obj) {
+      const achievements = Array.isArray(obj.achievementsGotten) ? obj.achievementsGotten.length : 0;
+      const jackpots = Array.isArray(getNested(obj, "layerOne.jackpotsGotten", [])) ? getNested(obj, "layerOne.jackpotsGotten", []).length : 0;
+      const superJackpots = Array.isArray(getNested(obj, "layerOne.superJackpotsGotten", [])) ? getNested(obj, "layerOne.superJackpotsGotten", []).length : 0;
+      const money = getNested(obj, "layerOne.money", "n/a");
+      ids.summary.textContent =
+        `gameVersion=${obj.gameVersion ?? "?"}\n` +
+        `saveVersion=${obj.saveVersion ?? "?"}\n` +
+        `money=${money}\n` +
+        `prestigeCount=${obj.prestigeCount ?? "?"}\n` +
+        `prestigeCurrency=${obj.prestigeCurrency ?? "?"}\n` +
+        `currentAct=${obj.currentAct ?? "?"}\n` +
+        `tokens=${obj.tokens ?? "?"}\n` +
+        `achievements=${achievements}\n` +
+        `jackpots=${jackpots}\n` +
+        `superJackpots=${superJackpots}`;
+    }
+
+    function decodeSave() {
+      clearStatus();
+      try {
+        const raw = ids.saveInput.value.trim();
+        if (!raw) throw new Error("Paste a save string first.");
+        const jsonText = decodeBase64Unicode(raw);
+        const obj = JSON.parse(jsonText);
+        putJsonInEditor(obj);
+        fillQuickFields(obj);
+        setStatus("Save decoded successfully.");
+      } catch (err) {
+        setStatus("Decode failed: " + err.message, false);
+      }
+    }
+
+    function encodeSave() {
+      clearStatus();
+      try {
+        const obj = getJsonFromEditor();
+        const encoded = encodeBase64Unicode(JSON.stringify(obj));
+        ids.saveInput.value = encoded;
+        renderSummary(obj);
+        setStatus("Save encoded successfully.");
+      } catch (err) {
+        setStatus("Encode failed: " + err.message, false);
+      }
+    }
+
+    function applyFields() {
+      clearStatus();
+      try {
+        const obj = getJsonFromEditor();
+        applyQuickFields(obj);
+        putJsonInEditor(obj);
+        renderSummary(obj);
+        setStatus("Fields applied to JSON.");
+      } catch (err) {
+        setStatus("Could not apply fields: " + err.message, false);
+      }
+    }
+
+    $("decodeBtn").addEventListener("click", decodeSave);
+    $("encodeBtn").addEventListener("click", encodeSave);
+    $("applyFieldsBtn").addEventListener("click", applyFields);
+
+    $("copyBtn").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(ids.saveInput.value);
+        setStatus("Encoded save copied to clipboard.");
+      } catch (err) {
+        setStatus("Copy failed: " + err.message, false);
+      }
+    });
+
+    $("clearBtn").addEventListener("click", () => {
+      ids.saveInput.value = "";
+      ids.decodedJson.value = "";
+      ids.summary.textContent = "No save decoded yet.";
+      [
+        "saveVersion","gameVersion","money","playedTime","prestigeCount","prestigeCurrency",
+        "currentAct","deathCount","loanCount","tokens","scratchLuck","scratchBotSpeed",
+        "scratchBotCapacity","scratchBotStrength"
+      ].forEach(k => ids[k].value = "");
+      clearStatus();
+    });
+
+    $("maxMoneyBtn").addEventListener("click", () => {
+      ids.money.value = "1000000000000000";
+    });
+
+    $("addPrestigeBtn").addEventListener("click", () => {
+      const current = Number(ids.prestigeCurrency.value || 0);
+      ids.prestigeCurrency.value = String(current + 100);
+    });
+
+    const sample = `ewogICJzYXZlVmVyc2lvbiI6ICIwLjEiLAogICJnYW1lVmVyc2lvbiI6ICIxLjAuMzBkIiwKICAidGltZXN0YW1wIjogMTc3Njc5ODQzNTc0OSwKICAicGxheWVkVGltZSI6IDE2NjE5Mjc0LAogICJsYXllck9uZSI6IHsKICAgICJtb25leSI6IDgyNTM1OTg3MzQ4NS4wLAogICAgInRpbWVTcGVudEluVGhpc1ByZXN0aWdlIjogMTM0MS43MDg3NCwKICAgICJ0aWNrZXRQcm9ncmVzc2lvbkRpY3QiOiB7CiAgICAgICJMb2FuIjogewogICAgICAgICJpZCI6ICJMb2FuIiwKICAgICAgICAieHAiOiAwLAogICAgICAgICJsZXZlbCI6IDAKICAgICAgfSwKICAgICAgIkRheSBKb2IiOiB7CiAgICAgICAgImlkIjogIkRheSBKb2IiLAogICAgICAgICJ4cCI6IDAsCiAgICAgICAgImxldmVsIjogMAogICAgICB9LAogICAgICAiVHdvIFdpbiI6IHsKICAgICAgICAiaWQiOiAiVHdvIFdpbiIsCiAgICAgICAgInhwIjogNSwKICAgICAgICAibGV2ZWwiOiAxCiAgICAgIH0sCiAgICAgICJNaW5pIFNjcmF0Y2giOiB7CiAgICAgICAgImlkIjogIk1pbmkgU2NyYXRjaCIsCiAgICAgICAgInhwIjogMiwKICAgICAgICAibGV2ZWwiOiA0CiAgICAgIH0sCiAgICAgICJBcHBsZSBUcmVlIjogewogICAgICAgICJpZCI6ICJBcHBsZSBUcmVlIiwKICAgICAgICAieHAiOiAyLAogICAgICAgICJsZXZlbCI6IDAKICAgICAgfSwKICAgICAgIlF1aWNrIENhc2giOiB7CiAgICAgICAgImlkIjogIlF1aWNrIENhc2giLAogICAgICAgICJ4cCI6IDIzLAogICAgICAgICJsZXZlbCI6IDYKICAgICAgfSwKICAgICAgIkx1Y2t5IENhdCI6IHsKICAgICAgICAiaWQiOiAiTHVja3kgQ2F0IiwKICAgICAgICAieHAiOiA4LAogICAgICAgICJsZXZlbCI6IDEKICAgICAgfSwKICAgICAgIkZpbmFsIENoYW5jZSI6IHsKICAgICAgICAiaWQiOiAiRmluYWwgQ2hhbmNlIiwKICAgICAgICAieHAiOiAwLAogICAgICAgICJsZXZlbCI6IDAKICAgICAgfSwKICAgICAgIlNhbmQgRG9sbGFycyI6IHsKICAgICAgICAiaWQiOiAiU2FuZCBEb2xsYXJzIiwKICAgICAgICAieHAiOiAzNiwKICAgICAgICAibGV2ZWwiOiA5CiAgICAgIH0sCiAgICAgICJTY3JhdGNoIE15IEJhY2siOiB7CiAgICAgICAgImlkIjogIlNjcmF0Y2ggTXkgQmFjayIsCiAgICAgICAgInhwIjogMTAsCiAgICAgICAgImxldmVsIjogNgogICAgICB9CiAgICB9LAogICAgInVwZ3JhZGVEYXRhRGljdCI6IHsKICAgICAgIlNjcmF0Y2ggTHVjayI6IHsKICAgICAgICAiaWQiOiAiU2NyYXRjaCBMdWNrIiwKICAgICAgICAiYnV5Q291bnQiOiAxNAogICAgICB9LAogICAgICAiU2NyYXRjaCBCb3QgU3BlZWQiOiB7CiAgICAgICAgImlkIjogIlNjcmF0Y2ggQm90IFNwZWVkIiwKICAgICAgICAiYnV5Q291bnQiOiAxMgogICAgICB9LAogICAgICAiU2NyYXRjaCBCb3QgQ2FwYWNpdHkiOiB7CiAgICAgICAgImlkIjogIlNjcmF0Y2ggQm90IENhcGFjaXR5IiwKICAgICAgICAiYnV5Q291bnQiOiA4CiAgICAgIH0sCiAgICAgICJTY3JhdGNoIEJvdCBTdHJlbmd0aCI6IHsKICAgICAgICAiaWQiOiAiU2NyYXRjaCBCb3QgU3RyZW5ndGgiLAogICAgICAgICJidXlDb3VudCI6IDcKICAgICAgfQogICAgfSwKICAgICJqYWNrcG90c0dvdHRlbiI6IFsKICAgICAgIlR3byBXaW4iLAogICAgICAiTWluaSBTY3JhdGNoIiwKICAgICAgIlF1aWNrIENhc2giCiAgICBdLAogICAgInN1cGVySmFja3BvdHNHb3R0ZW4iOiBbCiAgICAgICJNaW5pIFNjcmF0Y2giCiAgICBdCiAgfSwKICAicHJlc3RpZ2VDb3VudCI6IDQsCiAgInByZXN0aWdlQ3VycmVuY3kiOiA3LAogICJjdXJyZW50QWN0IjogMywKICAiZGVhdGhDb3VudCI6IDIsCiAgImxvYW5Db3VudCI6IDMsCiAgInRva2VucyI6IDMuMAp9`;
+
+    $("loadExampleBtn").addEventListener("click", () => {
+      ids.saveInput.value = sample;
+      decodeSave();
+    });
+  </script>
+</body>
+</html>
