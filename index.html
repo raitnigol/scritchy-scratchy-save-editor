@@ -373,15 +373,43 @@
       font-size: 13px;
     }
 
-    .cosmetic-grid {
+    .cosmetic-categories {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .cosmetic-category {
+      margin: 0;
+      padding: 14px 14px 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel-2);
+      min-width: 0;
+    }
+
+    .cosmetic-category legend {
+      padding: 0 6px;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .cosmetic-category-blurb {
+      margin: 0 0 12px;
+      line-height: 1.45;
+    }
+
+    .cosmetic-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
     .cosmetic-option {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
       padding: 10px 12px;
       border: 1px solid var(--border);
@@ -390,9 +418,44 @@
       cursor: pointer;
     }
 
+    .cosmetic-option:has(input:disabled) {
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+
     .cosmetic-option input[type="radio"] {
-      margin: 0;
+      margin: 3px 0 0;
+      flex: 0 0 auto;
       accent-color: var(--accent);
+    }
+
+    .cosmetic-option-body {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .cosmetic-option-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .cosmetic-option-id {
+      margin-top: 3px;
+      font-size: 11px;
+      line-height: 1.35;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      overflow-wrap: anywhere;
+    }
+
+    .cosmetic-equipped-summary {
+      margin-top: 18px;
+    }
+
+    .cosmetic-equipped-summary textarea.cosmetic-equipped-textarea {
+      min-height: 88px;
+      margin-top: 6px;
     }
 
     .ticket-grid {
@@ -448,7 +511,10 @@
       .sidebar {
         position: static;
       }
-      .guide, .row, .grid-3, .grid-4, .toggle-grid, .cosmetic-grid, .ticket-grid {
+      .guide, .row, .grid-3, .grid-4, .toggle-grid, .ticket-grid {
+        grid-template-columns: 1fr;
+      }
+      .cosmetic-categories {
         grid-template-columns: 1fr;
       }
     }
@@ -702,26 +768,29 @@
             <section id="section-cosmetics" class="section">
               <div class="card">
                 <h3>Cosmetics</h3>
-                <p class="subtle">This page makes cosmetics understandable: one category at a time, with clear toggles instead of raw array edits.</p>
-                <div class="cosmetic-grid">
-                  <div>
-                    <label>Table</label>
-                    <div id="cosmetics-table" class="toggle-grid"></div>
-                  </div>
-                  <div>
-                    <label>Trash can</label>
-                    <div id="cosmetics-trash" class="toggle-grid"></div>
-                  </div>
-                  <div>
-                    <label>Phone</label>
-                    <div id="cosmetics-phone" class="toggle-grid"></div>
-                  </div>
-                  <div>
-                    <label>Currently equipped cosmetics</label>
-                    <textarea id="equippedCosmeticsText" readonly></textarea>
-                  </div>
+                <p class="subtle">The save tracks three cosmetic slots (table, trash can, phone). Pick at most one skin per slot, or keep the default for that slot.</p>
+                <div class="cosmetic-categories">
+                  <fieldset class="cosmetic-category">
+                    <legend>Tables</legend>
+                    <p class="cosmetic-category-blurb tiny">Scratch table appearance. Default means no table skin is equipped.</p>
+                    <div id="cosmetics-table" class="cosmetic-options"></div>
+                  </fieldset>
+                  <fieldset class="cosmetic-category">
+                    <legend>Trash cans</legend>
+                    <p class="cosmetic-category-blurb tiny">Trash can appearance. Default means no trash skin is equipped.</p>
+                    <div id="cosmetics-trash" class="cosmetic-options"></div>
+                  </fieldset>
+                  <fieldset class="cosmetic-category">
+                    <legend>Phones</legend>
+                    <p class="cosmetic-category-blurb tiny">Phone appearance. Default means no phone skin is equipped.</p>
+                    <div id="cosmetics-phone" class="cosmetic-options"></div>
+                  </fieldset>
                 </div>
-                <div class="field-help spacer-top">Selecting a cosmetic equips it and also adds it to bought cosmetics if it was missing.</div>
+                <div class="cosmetic-equipped-summary">
+                  <label for="equippedCosmeticsText">Equipped IDs in save</label>
+                  <textarea id="equippedCosmeticsText" class="cosmetic-equipped-textarea" readonly></textarea>
+                </div>
+                <div class="field-help spacer-top">Choosing a skin equips it and adds it to bought cosmetics if it was missing.</div>
               </div>
             </section>
 
@@ -844,6 +913,21 @@
       ],
       onboarding: ["ScratchTicket"],
       claimedItems: ["Upgrade Catalog","Act 1 Catalog","Act 2 Catalog","Act 3 Catalog","Act 4 Catalog"]
+    };
+
+    const COSMETIC_LABELS = {
+      Astronomy_Table: "Astronomy table",
+      Mahagony_Table: "Mahogany table",
+      "Pink_Trash Can": "Pink trash can",
+      "Rusty_Trash Can": "Rusty trash can",
+      Cream_Phone: "Cream phone",
+      Blue_Phone: "Blue phone"
+    };
+
+    const COSMETIC_CATEGORY_META = {
+      table: { noneTitle: "Default", noneIdLine: "No table cosmetic equipped for this slot." },
+      trash: { noneTitle: "Default", noneIdLine: "No trash can cosmetic equipped for this slot." },
+      phone: { noneTitle: "Default", noneIdLine: "No phone cosmetic equipped for this slot." }
     };
 
     const $ = (id) => document.getElementById(id);
@@ -1366,23 +1450,48 @@
     }
 
     function buildCosmeticsUI() {
-      Object.entries(KNOWN.cosmetics).forEach(([category, values]) => {
+      Object.entries(KNOWN.cosmetics).forEach(([category, ids]) => {
         const container = document.getElementById(`cosmetics-${category}`);
-        const list = ["None", ...values];
-        renderToggleGrid(
-          container,
-          list,
-          value => {
-            const equipped = ensureArrayAt(currentSave, "equippedCosmetics");
-            if (value === "None") return !equipped.some(id => values.includes(id));
-            return equipped.includes(value);
-          },
-          (value, checked) => {
-            if (!checked) return;
-            equipCosmetic(category, value === "None" ? null : value);
-          },
-          `cosmetic-${category}`
-        );
+        if (!container) return;
+        const meta = COSMETIC_CATEGORY_META[category];
+        const radioName = `cosmetic-${category}`;
+        const equipped = currentSave ? ensureArrayAt(currentSave, "equippedCosmetics") : [];
+        const equippedHere = ids.find(id => equipped.includes(id)) || "";
+
+        function appendOption(value, titleText, idLine) {
+          const label = document.createElement("label");
+          label.className = "cosmetic-option";
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = radioName;
+          input.dataset.dynamic = "1";
+          input.value = value;
+          input.checked = value === equippedHere;
+          input.disabled = !currentSave;
+          input.addEventListener("change", () => {
+            if (!input.checked) return;
+            equipCosmetic(category, value ? value : null);
+          });
+          const body = document.createElement("div");
+          body.className = "cosmetic-option-body";
+          const titleEl = document.createElement("div");
+          titleEl.className = "cosmetic-option-title";
+          titleEl.textContent = titleText;
+          const idEl = document.createElement("div");
+          idEl.className = "cosmetic-option-id";
+          idEl.textContent = idLine;
+          body.appendChild(titleEl);
+          body.appendChild(idEl);
+          label.appendChild(input);
+          label.appendChild(body);
+          container.appendChild(label);
+        }
+
+        appendOption("", meta.noneTitle, meta.noneIdLine);
+        for (const id of ids) {
+          const title = COSMETIC_LABELS[id] || id.replace(/_/g, " ");
+          appendOption(id, title, id);
+        }
       });
     }
 
