@@ -556,6 +556,9 @@
 
             <div class="summary-box">
               <h3 style="margin-bottom:8px;">Sections</h3>
+              <p id="sectionsNavHint" class="tiny" style="margin: 0 0 10px; line-height: 1.45;">
+                Section buttons stay disabled until a save is decoded successfully. Paste your export (or choose a file), then click <strong>Load save</strong>.
+              </p>
               <div class="section-nav">
                 <button class="tab active" data-section="overview">Overview</button>
                 <button class="tab" data-section="tickets">Tickets</button>
@@ -895,6 +898,7 @@
       applyJsonBtn: $("applyJsonBtn"),
 
       sidebarSummary: $("sidebarSummary"),
+      sectionsNavHint: $("sectionsNavHint"),
       equippedCosmeticsText: $("equippedCosmeticsText"),
 
       ticketGrid: $("ticketGrid"),
@@ -1110,6 +1114,7 @@
 
       document.querySelectorAll('input[data-dynamic], select[data-dynamic], textarea[data-dynamic]').forEach(el => el.disabled = !enabled);
       document.querySelectorAll('button.tab').forEach(btn => btn.disabled = !enabled);
+      ids.sectionsNavHint.hidden = enabled;
     }
 
     function refreshChangedStyles() {
