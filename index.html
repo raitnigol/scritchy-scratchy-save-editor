@@ -1,27 +1,10 @@
-from pathlib import Path
-
-html = r'''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scritchy Scratchy Save Editor</title>
-  <meta name="description" content="Offline Scritchy Scratchy save editor. Paste an exported save, edit values, and generate a new import string locally in your browser." />
-  <meta name="theme-color" content="#ffffff" />
-  <meta property="og:title" content="Scritchy Scratchy Save Editor" />
-  <meta property="og:description" content="Offline browser-based save editor for Scritchy Scratchy exports." />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Scritchy Scratchy Save Editor" />
-  <meta name="twitter:description" content="Offline browser-based save editor for Scritchy Scratchy exports." />
-
-  <link rel="icon" type="image/x-icon" href="favicons/favicon.ico">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicons/favicon-16x16.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicons/favicon-32x32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="favicons/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="favicons/android-chrome-192x192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="favicons/android-chrome-512x512.png">
-
+  <meta name="description" content="Offline Scritchy Scratchy save editor for version 1.0.30d. Load, edit, and generate import strings locally in your browser." />
   <style>
     :root {
       --bg: #0f1115;
@@ -31,14 +14,14 @@ html = r'''<!DOCTYPE html>
       --text: #e6e6e6;
       --muted: #a8b0bd;
       --accent: #6ea8fe;
-      --accent-2: #95bcff;
       --good: #62d26f;
       --bad: #ff6b6b;
       --warn: #ffd166;
       --border: #303646;
       --input: #0f131b;
       --shadow: rgba(0,0,0,0.18);
-      --changed: rgba(110,168,254,0.14);
+      --changed: rgba(110,168,254,0.12);
+      --tab-active: rgba(110,168,254,0.15);
     }
 
     body.light {
@@ -49,7 +32,6 @@ html = r'''<!DOCTYPE html>
       --text: #151922;
       --muted: #566070;
       --accent: #2f6fed;
-      --accent-2: #4f83ef;
       --good: #0d8f3c;
       --bad: #d93b3b;
       --warn: #9a6b00;
@@ -57,6 +39,7 @@ html = r'''<!DOCTYPE html>
       --input: #ffffff;
       --shadow: rgba(20,30,50,0.08);
       --changed: rgba(47,111,237,0.08);
+      --tab-active: rgba(47,111,237,0.12);
     }
 
     * { box-sizing: border-box; }
@@ -67,11 +50,11 @@ html = r'''<!DOCTYPE html>
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
-      transition: background 0.2s ease, color 0.2s ease;
+      transition: background .2s ease, color .2s ease;
     }
 
     .wrap {
-      max-width: 1100px;
+      max-width: 1300px;
       margin: 0 auto;
       padding: 24px;
     }
@@ -89,10 +72,7 @@ html = r'''<!DOCTYPE html>
       line-height: 1.2;
     }
 
-    p {
-      margin: 0;
-      color: var(--muted);
-    }
+    p { margin: 0; color: var(--muted); }
 
     .hero {
       background: linear-gradient(180deg, var(--panel), var(--panel-3));
@@ -103,18 +83,12 @@ html = r'''<!DOCTYPE html>
       box-shadow: 0 10px 30px var(--shadow);
     }
 
-    .hero h1 {
-      margin-bottom: 10px;
-    }
-
-    .hero p + p {
-      margin-top: 8px;
-    }
+    .hero p + p { margin-top: 8px; }
 
     .guide {
       margin-top: 16px;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 12px;
     }
 
@@ -127,26 +101,21 @@ html = r'''<!DOCTYPE html>
 
     .guide-card strong {
       display: block;
-      color: var(--text);
       margin-bottom: 4px;
+      color: var(--text);
     }
 
     .version-note {
       margin-top: 14px;
       display: inline-flex;
-      align-items: center;
       gap: 8px;
+      align-items: center;
       background: var(--panel-2);
       border: 1px solid var(--border);
       border-radius: 999px;
       padding: 8px 12px;
-      color: var(--text);
       font-size: 13px;
-    }
-
-    .stack {
-      display: grid;
-      gap: 18px;
+      color: var(--text);
     }
 
     .panel {
@@ -157,51 +126,30 @@ html = r'''<!DOCTYPE html>
       box-shadow: 0 10px 30px var(--shadow);
     }
 
+    .stack { display: grid; gap: 18px; }
+
     .panel-head {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
       gap: 16px;
+      align-items: flex-start;
       margin-bottom: 12px;
     }
 
     .step-badge {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
       background: var(--panel-2);
       border: 1px solid var(--border);
-      color: var(--text);
       border-radius: 999px;
       padding: 7px 12px;
       font-size: 13px;
       white-space: nowrap;
     }
 
-    .subtle {
-      color: var(--muted);
-      font-size: 14px;
-    }
+    .subtle { font-size: 14px; color: var(--muted); }
 
-    textarea {
-      width: 100%;
-      min-height: 180px;
-      resize: vertical;
-      background: var(--input);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 13px;
-      line-height: 1.45;
-    }
-
-    textarea[readonly] {
-      opacity: 0.95;
-    }
-
-    input, select {
+    textarea, input, select {
       width: 100%;
       background: var(--input);
       color: var(--text);
@@ -209,14 +157,19 @@ html = r'''<!DOCTYPE html>
       border-radius: 12px;
       padding: 10px 12px;
       font-size: 14px;
-      transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
     }
 
-    input[type="file"] {
-      padding: 8px;
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.45;
     }
 
-    input:focus, textarea:focus {
+    textarea[readonly] { opacity: .95; }
+
+    input:focus, textarea:focus, select:focus {
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(110,168,254,0.15);
@@ -229,56 +182,14 @@ html = r'''<!DOCTYPE html>
       font-size: 13px;
     }
 
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .field-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .field-grid-4 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
-      gap: 12px;
-    }
-
-    .row + .row,
-    .field-grid + .field-grid,
-    .field-group + .field-group {
-      margin-top: 12px;
-    }
-
-    .field-group {
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px;
-      background: var(--panel-3);
-    }
-
-    .field-group h3 {
-      margin-bottom: 4px;
-      font-size: 16px;
-    }
-
-    .field-help {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 
     .buttons {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-    }
-
-    .buttons.tight {
-      gap: 8px;
     }
 
     button {
@@ -289,28 +200,24 @@ html = r'''<!DOCTYPE html>
       padding: 10px 14px;
       cursor: pointer;
       font-size: 14px;
-      transition: filter 0.15s ease, transform 0.02s ease;
+      transition: filter .15s ease, transform .02s ease;
     }
 
-    button:hover:not(:disabled) {
-      filter: brightness(1.04);
-    }
-
-    button:active:not(:disabled) {
-      transform: translateY(1px);
-    }
-
+    button:hover:not(:disabled) { filter: brightness(1.04); }
+    button:active:not(:disabled) { transform: translateY(1px); }
     button.primary {
       background: var(--accent);
       color: white;
       border-color: transparent;
       font-weight: 600;
     }
-
+    button.tab.active {
+      background: var(--tab-active);
+      border-color: var(--accent);
+    }
     button:disabled {
-      opacity: 0.55;
+      opacity: .55;
       cursor: not-allowed;
-      filter: none;
     }
 
     .status {
@@ -321,21 +228,18 @@ html = r'''<!DOCTYPE html>
       display: none;
       white-space: pre-wrap;
     }
-
     .status.ok {
       display: block;
       background: rgba(98,210,111,0.12);
       color: var(--good);
       border: 1px solid rgba(98,210,111,0.35);
     }
-
     .status.err {
       display: block;
       background: rgba(255,107,107,0.12);
       color: var(--bad);
       border: 1px solid rgba(255,107,107,0.35);
     }
-
     .status.warn {
       display: block;
       background: rgba(255,209,102,0.12);
@@ -362,15 +266,25 @@ html = r'''<!DOCTYPE html>
       color: var(--muted);
     }
 
-    .pill strong {
-      color: var(--text);
+    .pill strong { color: var(--text); }
+
+    .editor-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 18px;
+      align-items: start;
     }
 
-    .summary-grid {
+    .sidebar {
+      position: sticky;
+      top: 18px;
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-top: 14px;
+      gap: 12px;
+    }
+
+    .section-nav {
+      display: grid;
+      gap: 8px;
     }
 
     .summary-box {
@@ -378,11 +292,6 @@ html = r'''<!DOCTYPE html>
       border-radius: 14px;
       background: var(--panel-3);
       padding: 14px;
-    }
-
-    .summary-box h3 {
-      margin-bottom: 8px;
-      font-size: 15px;
     }
 
     .summary-list {
@@ -398,19 +307,35 @@ html = r'''<!DOCTYPE html>
       border-bottom: 1px dashed var(--border);
       padding-bottom: 6px;
     }
-
     .summary-item:last-child {
       border-bottom: 0;
       padding-bottom: 0;
     }
-
-    .summary-label {
-      color: var(--muted);
-    }
-
+    .summary-label { color: var(--muted); }
     .summary-value {
       text-align: right;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .section {
+      display: none;
+      gap: 14px;
+    }
+    .section.active {
+      display: grid;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel-3);
+      padding: 14px;
+    }
+
+    .field-help {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
     }
 
     .changed {
@@ -418,43 +343,96 @@ html = r'''<!DOCTYPE html>
       border-color: var(--accent) !important;
     }
 
-    .change-note {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--muted);
+    .toggle-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
     }
+
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--input);
+    }
+
+    .toggle-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: var(--accent);
+      flex: 0 0 auto;
+    }
+
+    .toggle-item span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+    }
+
+    .cosmetic-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .cosmetic-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--input);
+      cursor: pointer;
+    }
+
+    .cosmetic-option input[type="radio"] {
+      margin: 0;
+      accent-color: var(--accent);
+    }
+
+    .ticket-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .ticket-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--input);
+    }
+
+    .ticket-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .tiny { font-size: 12px; color: var(--muted); }
+    .spacer-top { margin-top: 14px; }
 
     details {
       border: 1px solid var(--border);
       border-radius: 14px;
       background: var(--panel-3);
-      margin-top: 16px;
       overflow: hidden;
     }
-
     details summary {
       cursor: pointer;
       padding: 14px;
       font-weight: 600;
       list-style: none;
     }
-
-    details summary::-webkit-details-marker {
-      display: none;
-    }
-
-    details > div {
-      padding: 0 14px 14px;
-    }
-
-    .small {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .spacer-top {
-      margin-top: 14px;
-    }
+    details summary::-webkit-details-marker { display: none; }
+    details > div { padding: 0 14px 14px; }
 
     .footer {
       margin-top: 20px;
@@ -463,19 +441,15 @@ html = r'''<!DOCTYPE html>
       font-size: 13px;
     }
 
-    @media (max-width: 900px) {
-      .guide,
-      .row,
-      .field-grid,
-      .field-grid-4,
-      .summary-grid {
+    @media (max-width: 1100px) {
+      .editor-layout {
         grid-template-columns: 1fr;
       }
-
-      .topbar,
-      .panel-head {
-        flex-direction: column;
-        align-items: stretch;
+      .sidebar {
+        position: static;
+      }
+      .guide, .row, .grid-3, .grid-4, .toggle-grid, .cosmetic-grid, .ticket-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -485,7 +459,7 @@ html = r'''<!DOCTYPE html>
     <div class="topbar">
       <div>
         <h1>Scritchy Scratchy Save Editor</h1>
-        <p>Paste an exported save, edit the values you want, then generate a new import string locally in your browser.</p>
+        <p>Load a save, edit it through dedicated sections, then generate a fresh import string locally in your browser.</p>
       </div>
       <div class="buttons">
         <button id="themeToggle">Toggle theme</button>
@@ -493,9 +467,10 @@ html = r'''<!DOCTYPE html>
     </div>
 
     <section class="hero">
-      <h2>Local-only tool</h2>
-      <p>This editor runs entirely in your browser. Your save data is not uploaded anywhere by this page.</p>
-      <p>Use one untouched export as backup before importing any edited save.</p>
+      <h2>Single-page editor, less raw JSON pain</h2>
+      <p>This version is built around how the save actually behaves: currencies, progression, tickets, upgrades, cosmetics, achievements, dialogues, and advanced JSON.</p>
+      <p>It targets the known save structure for game version <strong>1.0.30d</strong>.</p>
+
       <div class="version-note">Target game version: <strong>1.0.30d</strong></div>
 
       <div class="guide">
@@ -504,12 +479,16 @@ html = r'''<!DOCTYPE html>
           The game copies your current save to clipboard.
         </div>
         <div class="guide-card">
-          <strong>2. Edit it here</strong>
-          Paste the export, load it, and change the values you want.
+          <strong>2. Load it here</strong>
+          Paste the export string and decode it.
         </div>
         <div class="guide-card">
-          <strong>3. Import in game</strong>
-          Copy the generated import string, then hold Import for 3 seconds.
+          <strong>3. Edit by section</strong>
+          Use dedicated pages for the save parts instead of raw JSON lists.
+        </div>
+        <div class="guide-card">
+          <strong>4. Import in game</strong>
+          Generate a new string, copy it, then hold Import for 3 seconds.
         </div>
       </div>
     </section>
@@ -560,196 +539,236 @@ html = r'''<!DOCTYPE html>
       <section class="panel">
         <div class="panel-head">
           <div>
-            <h2>Edit values</h2>
-            <p class="subtle">These fields update the loaded save directly. You do not need a separate apply step.</p>
+            <h2>Edit save</h2>
+            <p class="subtle">The editor has one internal state. Each section updates the loaded save directly.</p>
           </div>
           <div class="step-badge">Step 2</div>
         </div>
 
-        <div class="field-group">
-          <h3>Currencies</h3>
-          <p class="field-help">The most commonly edited values.</p>
+        <div class="editor-layout">
+          <aside class="sidebar">
+            <div class="summary-box">
+              <h3 style="margin-bottom:8px;">Snapshot</h3>
+              <div id="sidebarSummary" class="summary-list">
+                <div class="tiny">No save loaded yet.</div>
+              </div>
+            </div>
 
-          <div class="field-grid">
-            <div>
-              <label for="money">Money</label>
-              <input id="money" type="number" step="any" disabled />
+            <div class="summary-box">
+              <h3 style="margin-bottom:8px;">Sections</h3>
+              <div class="section-nav">
+                <button class="tab active" data-section="overview">Overview</button>
+                <button class="tab" data-section="tickets">Tickets</button>
+                <button class="tab" data-section="upgrades">Upgrades</button>
+                <button class="tab" data-section="prestige">Prestige</button>
+                <button class="tab" data-section="cosmetics">Cosmetics</button>
+                <button class="tab" data-section="achievements">Achievements</button>
+                <button class="tab" data-section="dialogues">Dialogues</button>
+                <button class="tab" data-section="advanced">Advanced</button>
+              </div>
             </div>
-            <div>
-              <label for="prestigeCurrency">Prestige currency</label>
-              <input id="prestigeCurrency" type="number" step="any" disabled />
-              <div class="field-help">Used for prestige upgrades.</div>
-            </div>
-          </div>
+          </aside>
 
-          <div class="field-grid">
-            <div>
-              <label for="tokens">Tokens</label>
-              <input id="tokens" type="number" step="any" disabled />
-            </div>
-            <div>
-              <label for="souls">Souls</label>
-              <input id="souls" type="number" step="any" disabled />
-            </div>
-          </div>
+          <div>
+            <section id="section-overview" class="section active">
+              <div class="card">
+                <h3>Currencies</h3>
+                <div class="grid-4">
+                  <div>
+                    <label for="money">Money</label>
+                    <input id="money" type="number" step="any" disabled />
+                  </div>
+                  <div>
+                    <label for="prestigeCurrency">Prestige currency</label>
+                    <input id="prestigeCurrency" type="number" step="any" disabled />
+                  </div>
+                  <div>
+                    <label for="tokens">Tokens</label>
+                    <input id="tokens" type="number" step="any" disabled />
+                  </div>
+                  <div>
+                    <label for="souls">Souls</label>
+                    <input id="souls" type="number" step="any" disabled />
+                  </div>
+                </div>
+                <div class="buttons spacer-top">
+                  <button id="setMaxMoneyBtn" disabled>Set money to max</button>
+                  <button id="addPrestigeBtn" disabled>Add 100 prestige</button>
+                  <button id="setTokens999Btn" disabled>Set tokens to 999</button>
+                </div>
+              </div>
 
-          <div class="buttons tight spacer-top">
-            <button id="setMaxMoneyBtn" disabled>Set money to max</button>
-            <button id="addPrestigeBtn" disabled>Add 100 prestige</button>
-            <button id="setTokens999Btn" disabled>Set tokens to 999</button>
-          </div>
-        </div>
+              <div class="card">
+                <h3>Progress</h3>
+                <div class="grid-4">
+                  <div>
+                    <label for="prestigeCount">Prestige count</label>
+                    <input id="prestigeCount" type="number" step="1" disabled />
+                  </div>
+                  <div>
+                    <label for="currentAct">Current act</label>
+                    <input id="currentAct" type="number" step="1" disabled />
+                  </div>
+                  <div>
+                    <label for="deathCount">Death count</label>
+                    <input id="deathCount" type="number" step="1" disabled />
+                  </div>
+                  <div>
+                    <label for="loanCount">Loan count</label>
+                    <input id="loanCount" type="number" step="1" disabled />
+                  </div>
+                </div>
+                <div class="grid-4 spacer-top">
+                  <div>
+                    <label for="playedTime">Played time</label>
+                    <input id="playedTime" type="number" step="1" disabled />
+                  </div>
+                  <div>
+                    <label for="machineTier">Machine tier</label>
+                    <input id="machineTier" type="number" step="1" disabled />
+                  </div>
+                  <div>
+                    <label for="machineFeedCount">Machine feed count</label>
+                    <input id="machineFeedCount" type="number" step="1" disabled />
+                  </div>
+                  <div>
+                    <label for="timestamp">Timestamp</label>
+                    <input id="timestamp" type="number" step="1" disabled />
+                  </div>
+                </div>
+                <div class="buttons spacer-top">
+                  <button id="setDeathsZeroBtn" disabled>Set deaths to 0</button>
+                  <button id="setLoansZeroBtn" disabled>Set loans to 0</button>
+                </div>
+              </div>
 
-        <div class="field-group">
-          <h3>Progress</h3>
-          <p class="field-help">Changing progression values too aggressively may break save flow.</p>
+              <div class="card">
+                <h3>Meta</h3>
+                <div class="row">
+                  <div>
+                    <label for="saveVersion">Save version</label>
+                    <input id="saveVersion" type="text" disabled />
+                  </div>
+                  <div>
+                    <label for="gameVersion">Game version</label>
+                    <input id="gameVersion" type="text" disabled />
+                  </div>
+                </div>
+                <div class="field-help spacer-top">Game version is shown here so you can immediately see whether the loaded save matches the target editor version.</div>
+              </div>
+            </section>
 
-          <div class="field-grid">
-            <div>
-              <label for="prestigeCount">Prestige count</label>
-              <input id="prestigeCount" type="number" step="1" disabled />
-            </div>
-            <div>
-              <label for="currentAct">Current act</label>
-              <input id="currentAct" type="number" step="1" disabled />
-              <div class="field-help">May break progression if set beyond what your save supports.</div>
-            </div>
-          </div>
+            <section id="section-tickets" class="section">
+              <div class="card">
+                <h3>Ticket progression</h3>
+                <p class="subtle">Known ticket entries are edited here with direct XP and level inputs.</p>
+                <div class="ticket-grid spacer-top" id="ticketGrid"></div>
+              </div>
 
-          <div class="field-grid">
-            <div>
-              <label for="deathCount">Death count</label>
-              <input id="deathCount" type="number" step="1" disabled />
-            </div>
-            <div>
-              <label for="loanCount">Loan count</label>
-              <input id="loanCount" type="number" step="1" disabled />
-            </div>
-          </div>
+              <div class="card">
+                <h3>Jackpots</h3>
+                <div class="row">
+                  <div>
+                    <label>Normal jackpots gotten</label>
+                    <div class="toggle-grid" id="jackpotsGrid"></div>
+                  </div>
+                  <div>
+                    <label>Super jackpots gotten</label>
+                    <div class="toggle-grid" id="superJackpotsGrid"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-          <div class="field-grid">
-            <div>
-              <label for="playedTime">Played time</label>
-              <input id="playedTime" type="number" step="1" disabled />
-            </div>
-            <div>
-              <label for="machineTier">Machine tier</label>
-              <input id="machineTier" type="number" step="1" disabled />
-            </div>
-          </div>
+            <section id="section-upgrades" class="section">
+              <div class="card">
+                <h3>Upgrade buy counts</h3>
+                <p class="subtle">Grouped by the names visible in the current known dataset.</p>
+                <div class="grid-3" id="upgradeGroups"></div>
+              </div>
+            </section>
 
-          <div class="buttons tight spacer-top">
-            <button id="setDeathsZeroBtn" disabled>Set deaths to 0</button>
-            <button id="setLoansZeroBtn" disabled>Set loans to 0</button>
-          </div>
-        </div>
+            <section id="section-prestige" class="section">
+              <div class="card">
+                <h3>Prestige upgrades</h3>
+                <p class="subtle">These are the top-level bought prestige upgrades from the known dataset.</p>
+                <div class="grid-3" id="prestigeGrid"></div>
+              </div>
+            </section>
 
-        <div class="field-group">
-          <h3>Automation upgrades</h3>
-          <p class="field-help">Quick access for the most obvious automation-related upgrades.</p>
+            <section id="section-cosmetics" class="section">
+              <div class="card">
+                <h3>Cosmetics</h3>
+                <p class="subtle">This page makes cosmetics understandable: one category at a time, with clear toggles instead of raw array edits.</p>
+                <div class="cosmetic-grid">
+                  <div>
+                    <label>Table</label>
+                    <div id="cosmetics-table" class="toggle-grid"></div>
+                  </div>
+                  <div>
+                    <label>Trash can</label>
+                    <div id="cosmetics-trash" class="toggle-grid"></div>
+                  </div>
+                  <div>
+                    <label>Phone</label>
+                    <div id="cosmetics-phone" class="toggle-grid"></div>
+                  </div>
+                  <div>
+                    <label>Currently equipped cosmetics</label>
+                    <textarea id="equippedCosmeticsText" readonly></textarea>
+                  </div>
+                </div>
+                <div class="field-help spacer-top">Selecting a cosmetic equips it and also adds it to bought cosmetics if it was missing.</div>
+              </div>
+            </section>
 
-          <div class="field-grid">
-            <div>
-              <label for="scratchLuck">Scratch Luck</label>
-              <input id="scratchLuck" type="number" step="1" disabled />
-              <div class="field-help">Upgrade buyCount.</div>
-            </div>
-            <div>
-              <label for="scratchBotSpeed">Scratch Bot Speed</label>
-              <input id="scratchBotSpeed" type="number" step="1" disabled />
-              <div class="field-help">Upgrade buyCount.</div>
-            </div>
-          </div>
+            <section id="section-achievements" class="section">
+              <div class="card">
+                <h3>Achievements</h3>
+                <div class="row">
+                  <div>
+                    <label>Achievements gotten</label>
+                    <div class="toggle-grid" id="achievementsGottenGrid"></div>
+                  </div>
+                  <div>
+                    <label>Achievements claimed</label>
+                    <div class="toggle-grid" id="achievementsClaimedGrid"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-          <div class="field-grid">
-            <div>
-              <label for="scratchBotCapacity">Scratch Bot Capacity</label>
-              <input id="scratchBotCapacity" type="number" step="1" disabled />
-              <div class="field-help">Upgrade buyCount.</div>
-            </div>
-            <div>
-              <label for="scratchBotStrength">Scratch Bot Strength</label>
-              <input id="scratchBotStrength" type="number" step="1" disabled />
-              <div class="field-help">Upgrade buyCount.</div>
-            </div>
-          </div>
-        </div>
+            <section id="section-dialogues" class="section">
+              <div class="card">
+                <h3>Dialogues and onboarding</h3>
+                <div class="row">
+                  <div>
+                    <label>Dialogues played</label>
+                    <div class="toggle-grid" id="dialoguesGrid"></div>
+                  </div>
+                  <div>
+                    <label>Completed onboarding steps</label>
+                    <div class="toggle-grid" id="onboardingGrid"></div>
+                    <label class="spacer-top">Claimed custom table items</label>
+                    <div class="toggle-grid" id="claimedItemsGrid"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-        <div class="field-group">
-          <h3>Cosmetics</h3>
-          <p class="field-help">These buttons equip the cosmetic and also add it to bought cosmetics if it is missing.</p>
-
-          <div class="field-grid">
-            <div>
-              <label>Currently equipped cosmetics</label>
-              <textarea id="equippedCosmeticsText" readonly placeholder="No save loaded yet."></textarea>
-            </div>
-            <div>
-              <label>Known cosmetic IDs added in this editor</label>
-              <textarea readonly>Rusty_Trash Can
-Cream_Phone
-Blue_Phone
-Mahagony_Table</textarea>
-            </div>
-          </div>
-
-          <div class="field-grid-4 spacer-top">
-            <button id="equipRustyTrashBtn" disabled>Equip Rusty Trash Can</button>
-            <button id="equipCreamPhoneBtn" disabled>Equip Cream Phone</button>
-            <button id="equipBluePhoneBtn" disabled>Equip Blue Phone</button>
-            <button id="equipMahagonyTableBtn" disabled>Equip Mahagony Table</button>
-          </div>
-
-          <div class="field-help spacer-top">
-            Cosmetic IDs used:
-            Rusty Trash Can → <span class="small">Rusty_Trash Can</span>,
-            Cream Phone → <span class="small">Cream_Phone</span>,
-            Blue Phone → <span class="small">Blue_Phone</span>,
-            Mahagony Table → <span class="small">Mahagony_Table</span>
-          </div>
-        </div>
-
-        <div class="field-group">
-          <h3>Save info</h3>
-          <p class="field-help">Usually leave these alone unless you know why you are changing them.</p>
-
-          <div class="field-grid">
-            <div>
-              <label for="gameVersion">Game version</label>
-              <input id="gameVersion" type="text" disabled />
-            </div>
-            <div>
-              <label for="saveVersion">Save version</label>
-              <input id="saveVersion" type="text" disabled />
-            </div>
-          </div>
-
-          <div class="field-grid">
-            <div>
-              <label for="timestamp">Timestamp</label>
-              <input id="timestamp" type="number" step="1" disabled />
-            </div>
-            <div>
-              <label for="machineFeedCount">Machine feed count</label>
-              <input id="machineFeedCount" type="number" step="1" disabled />
-            </div>
-          </div>
-        </div>
-
-        <div class="summary-grid">
-          <div class="summary-box">
-            <h3>Loaded save snapshot</h3>
-            <div id="originalSummary" class="summary-list">
-              <div class="small">No save loaded yet.</div>
-            </div>
-          </div>
-
-          <div class="summary-box">
-            <h3>Current edited snapshot</h3>
-            <div id="currentSummary" class="summary-list">
-              <div class="small">No save loaded yet.</div>
-            </div>
-            <div class="change-note" id="changeNote">No changes yet.</div>
+            <section id="section-advanced" class="section">
+              <div class="card">
+                <h3>Raw JSON editor</h3>
+                <p class="subtle">Use this only for values the normal sections do not cover.</p>
+                <label for="decodedJson" class="spacer-top">Raw decoded JSON</label>
+                <textarea id="decodedJson" placeholder="Decoded JSON will appear here once a save is loaded..."></textarea>
+                <div class="buttons spacer-top">
+                  <button id="validateJsonBtn" disabled>Validate JSON</button>
+                  <button id="formatJsonBtn" disabled>Format JSON</button>
+                  <button id="applyJsonBtn" disabled>Apply raw JSON to editor</button>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </section>
@@ -773,45 +792,62 @@ Mahagony_Table</textarea>
         <div class="spacer-top">
           <label for="outputSave">Generated import string</label>
           <textarea id="outputSave" readonly placeholder="Your generated import string will appear here..."></textarea>
-          <p class="small">Copy this value, return to the game, then hold the Import button for 3 seconds.</p>
+          <p class="tiny">Copy this value, return to the game, then hold the Import button for 3 seconds.</p>
         </div>
-      </section>
-
-      <section class="panel">
-        <h2>Advanced</h2>
-        <p class="subtle">Use the raw JSON editor only if you want to edit fields not exposed above.</p>
-
-        <details>
-          <summary>Open raw JSON editor</summary>
-          <div>
-            <label for="decodedJson">Raw decoded JSON</label>
-            <textarea id="decodedJson" placeholder="Decoded JSON will appear here once a save is loaded..."></textarea>
-
-            <div class="buttons spacer-top">
-              <button id="validateJsonBtn" disabled>Validate JSON</button>
-              <button id="formatJsonBtn" disabled>Format JSON</button>
-              <button id="applyJsonBtn" disabled>Apply raw JSON to editor</button>
-            </div>
-
-            <p class="small spacer-top">
-              This editor is advanced mode. If you change JSON here, click “Apply raw JSON to editor” to replace the current loaded save with your edited JSON.
-            </p>
-          </div>
-        </details>
       </section>
     </div>
 
     <footer class="footer">
       <div>Unofficial fan-made tool. Use at your own risk.</div>
-      <div style="margin-top:6px">Designed for local browser use on GitHub Pages. Targeted at version 1.0.30d.</div>
+      <div style="margin-top:6px">Designed for local browser use on GitHub Pages. Structured around version 1.0.30d known save data.</div>
     </footer>
   </div>
 
   <script>
+    const KNOWN = {
+      tickets: [
+        "Loan","Day Job","Two Win","Mini Scratch","Apple Tree","Quick Cash","Lucky Cat","Final Chance","Sand Dollars","Scratch My Back","Snake Eyes","The Bomb","Final Chance_2","Bank Break","Xmas Countdown","Thrift Store","Berry Picking","Final Chance_3","Trick or Treat","Slot Machine","To the Moon","Booster Pack","Final Chance_4","Final Chance_Win","Super_Day Job","Super_Two Win","Super_Mini Scratch","Super_Apple Tree","Super_Quick Cash","Super_Lucky Cat","Super_Sand Dollars","Super_Scratch My Back","Super_Snake Eyes","Super_The Bomb","Super_Bank Break","Super_Xmas Countdown","Super_Thrift Store","Super_Berry Picking","Super_Trick or Treat","Super_Slot Machine","Super_To the Moon","Super_Booster Pack","Super_Final Chance_Win"
+      ],
+      normalJackpots: [
+        "Two Win","Mini Scratch","Quick Cash","Sand Dollars","Scratch My Back","Snake Eyes","The Bomb","Bank Break","Xmas Countdown","Thrift Store","Berry Picking","Trick or Treat","Slot Machine","To the Moon","Booster Pack"
+      ],
+      superJackpots: [
+        "Super_Day Job","Super_Two Win","Super_Mini Scratch","Super_Apple Tree","Super_Quick Cash","Super_Lucky Cat","Super_Sand Dollars","Super_Scratch My Back","Super_Snake Eyes","Super_The Bomb","Super_Bank Break","Super_Xmas Countdown","Super_Thrift Store","Super_Berry Picking","Super_Trick or Treat","Super_Slot Machine","Super_To the Moon","Super_Booster Pack","Super_Final Chance_Win","Slot Machine"
+      ],
+      upgradeGroups: {
+        "Core / scratch": [
+          "The Machine","Scratch Luck","Scratch Bot","Scratch Bot Speed","Scratch Bot Capacity","Scratch Bot Strength"
+        ],
+        "Coin progression": [
+          "Scratch Size_Base Coin","Tin Coin","Scratch Size_Tin Coin","Aluminum Coin","Scratch Size_Aluminum Coin","Copper Coin","Scratch Size_Copper Coin","Bronze Coin","Scratch Size_Bronze Coin","Iron Coin","Scratch Size_Iron Coin","Steel Coin","Scratch Size_Steel Coin","Titanium Coin","Scratch Size_Titanium Coin","Tungsten Coin","Scratch Size_Tungsten Coin"
+        ],
+        "Objects / helpers": [
+          "Trash Can","Fan","Fan Speed","Fan Battery","Sticky Mat","Badge Collection","Mundo","Mundo Speed","Spell Book","Spell Charge Speed","Subscription Bot","Buying Speed","Egg Timer","Timer Capacity","Timer Charge","Warp Speed"
+        ]
+      },
+      prestigeUpgrades: [
+        "Muscle Memory","Night Market","Allowance","Super Lucky","Starter Kit","Tool Belt","Jackpot Power","Booster Kit","Electric Fan","Completionist","Self Made Millionaire","Big Winner","Pet Lover","Picky Eater","Air Condition","Less is More","Recycling","Smart Investment","Time Travel","Fully Automated","Dishwasher","Fine Dining","PlateMaster5000","Experienced","Clean Freak","Shopping Spree","Magic"
+      ],
+      cosmetics: {
+        table: ["Astronomy_Table","Mahagony_Table"],
+        trash: ["Pink_Trash Can","Rusty_Trash Can"],
+        phone: ["Cream_Phone","Blue_Phone"]
+      },
+      achievements: [
+        "Take Loan","Death_1","Super Jackpot","Trash Jackpot","Death_2","Lucky ticket","Clicker minigame","Spend all the worlds money","Lucky cat","Wizard","Visit the Night Market","Bad kitty","Death_3","Time machine","Death_4","Idle game","Win your job","Soul Siphon","Winning streak","Big win"
+      ],
+      dialogues: [
+        "moneyTrouble","bankrupt","firstLoan","trashCanTutorial","dayJob","upgrades","newTicket","scratchBot","appleTreeWorms","fanUnlock","stickyMat","death1","prestigeUnlock","notBankrupt","badgeCollection","mundo","death2","catalogue3","spellBook","subscriptionBot","death3","catalogue4","eggTimer","death4","theMachine"
+      ],
+      onboarding: ["ScratchTicket"],
+      claimedItems: ["Upgrade Catalog","Act 1 Catalog","Act 2 Catalog","Act 3 Catalog","Act 4 Catalog"]
+    };
+
     const $ = (id) => document.getElementById(id);
 
     const ids = {
       saveInput: $("saveInput"),
+      saveFileInput: $("saveFileInput"),
       outputSave: $("outputSave"),
       decodedJson: $("decodedJson"),
       status: $("status"),
@@ -820,35 +856,25 @@ Mahagony_Table</textarea>
       dirtyState: $("dirtyState"),
       outputState: $("outputState"),
 
-      originalSummary: $("originalSummary"),
-      currentSummary: $("currentSummary"),
-      changeNote: $("changeNote"),
-      equippedCosmeticsText: $("equippedCosmeticsText"),
-
-      saveVersion: $("saveVersion"),
-      gameVersion: $("gameVersion"),
-      timestamp: $("timestamp"),
       money: $("money"),
-      playedTime: $("playedTime"),
-      prestigeCount: $("prestigeCount"),
       prestigeCurrency: $("prestigeCurrency"),
+      tokens: $("tokens"),
+      souls: $("souls"),
+      prestigeCount: $("prestigeCount"),
       currentAct: $("currentAct"),
       deathCount: $("deathCount"),
       loanCount: $("loanCount"),
-      tokens: $("tokens"),
-      souls: $("souls"),
+      playedTime: $("playedTime"),
       machineTier: $("machineTier"),
       machineFeedCount: $("machineFeedCount"),
-      scratchLuck: $("scratchLuck"),
-      scratchBotSpeed: $("scratchBotSpeed"),
-      scratchBotCapacity: $("scratchBotCapacity"),
-      scratchBotStrength: $("scratchBotStrength"),
+      timestamp: $("timestamp"),
+      saveVersion: $("saveVersion"),
+      gameVersion: $("gameVersion"),
 
       themeToggle: $("themeToggle"),
       pasteClipboardBtn: $("pasteClipboardBtn"),
       loadSaveBtn: $("loadSaveBtn"),
       resetEditorBtn: $("resetEditorBtn"),
-      saveFileInput: $("saveFileInput"),
       saveBackupBtn: $("saveBackupBtn"),
       restoreBackupBtn: $("restoreBackupBtn"),
       clearBackupBtn: $("clearBackupBtn"),
@@ -859,11 +885,6 @@ Mahagony_Table</textarea>
       setDeathsZeroBtn: $("setDeathsZeroBtn"),
       setLoansZeroBtn: $("setLoansZeroBtn"),
 
-      equipRustyTrashBtn: $("equipRustyTrashBtn"),
-      equipCreamPhoneBtn: $("equipCreamPhoneBtn"),
-      equipBluePhoneBtn: $("equipBluePhoneBtn"),
-      equipMahagonyTableBtn: $("equipMahagonyTableBtn"),
-
       generateOutputBtn: $("generateOutputBtn"),
       copyOutputBtn: $("copyOutputBtn"),
       downloadEncodedBtn: $("downloadEncodedBtn"),
@@ -871,36 +892,46 @@ Mahagony_Table</textarea>
 
       validateJsonBtn: $("validateJsonBtn"),
       formatJsonBtn: $("formatJsonBtn"),
-      applyJsonBtn: $("applyJsonBtn")
+      applyJsonBtn: $("applyJsonBtn"),
+
+      sidebarSummary: $("sidebarSummary"),
+      equippedCosmeticsText: $("equippedCosmeticsText"),
+
+      ticketGrid: $("ticketGrid"),
+      jackpotsGrid: $("jackpotsGrid"),
+      superJackpotsGrid: $("superJackpotsGrid"),
+      upgradeGroups: $("upgradeGroups"),
+      prestigeGrid: $("prestigeGrid"),
+      achievementsGottenGrid: $("achievementsGottenGrid"),
+      achievementsClaimedGrid: $("achievementsClaimedGrid"),
+      dialoguesGrid: $("dialoguesGrid"),
+      onboardingGrid: $("onboardingGrid"),
+      claimedItemsGrid: $("claimedItemsGrid")
     };
 
     const BACKUP_KEY = "scritchy_scratchy_save_backup";
-    const THEME_KEY = "scritchy_scratchy_theme_v3";
+    const THEME_KEY = "scritchy_scratchy_theme_v4";
 
     let originalSave = null;
     let currentSave = null;
     let isDirty = false;
     let outputIsFresh = false;
 
-    const fieldBindings = [
-      { id: "saveVersion", path: "saveVersion", type: "string" },
-      { id: "gameVersion", path: "gameVersion", type: "string" },
-      { id: "timestamp", path: "timestamp", type: "number" },
+    const simpleBindings = [
       { id: "money", path: "layerOne.money", type: "number" },
-      { id: "playedTime", path: "playedTime", type: "number" },
-      { id: "prestigeCount", path: "prestigeCount", type: "number" },
       { id: "prestigeCurrency", path: "prestigeCurrency", type: "number" },
+      { id: "tokens", path: "tokens", type: "number" },
+      { id: "souls", path: "layerOne.souls", type: "number" },
+      { id: "prestigeCount", path: "prestigeCount", type: "number" },
       { id: "currentAct", path: "currentAct", type: "number" },
       { id: "deathCount", path: "deathCount", type: "number" },
       { id: "loanCount", path: "loanCount", type: "number" },
-      { id: "tokens", path: "tokens", type: "number" },
-      { id: "souls", path: "layerOne.souls", type: "number" },
+      { id: "playedTime", path: "playedTime", type: "number" },
       { id: "machineTier", path: "layerOne.machineTier", type: "number" },
       { id: "machineFeedCount", path: "layerOne.machineFeedCount", type: "number" },
-      { id: "scratchLuck", path: "layerOne.upgradeDataDict.Scratch Luck.buyCount", type: "number" },
-      { id: "scratchBotSpeed", path: "layerOne.upgradeDataDict.Scratch Bot Speed.buyCount", type: "number" },
-      { id: "scratchBotCapacity", path: "layerOne.upgradeDataDict.Scratch Bot Capacity.buyCount", type: "number" },
-      { id: "scratchBotStrength", path: "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount", type: "number" }
+      { id: "timestamp", path: "timestamp", type: "number" },
+      { id: "saveVersion", path: "saveVersion", type: "string" },
+      { id: "gameVersion", path: "gameVersion", type: "string" }
     ];
 
     function setStatus(message, type = "ok") {
@@ -953,6 +984,18 @@ Mahagony_Table</textarea>
       cur[parts[parts.length - 1]] = value;
     }
 
+    function ensureArrayAt(obj, path) {
+      const value = getNested(obj, path, null);
+      if (!Array.isArray(value)) setNested(obj, path, []);
+      return getNested(obj, path, []);
+    }
+
+    function ensureObjectAt(obj, path) {
+      const value = getNested(obj, path, null);
+      if (!value || typeof value !== "object" || Array.isArray(value)) setNested(obj, path, {});
+      return getNested(obj, path, {});
+    }
+
     function numericOrNull(value) {
       if (value === "" || value === null || value === undefined) return null;
       const n = Number(value);
@@ -965,19 +1008,16 @@ Mahagony_Table</textarea>
 
     function validateSaveObject(obj) {
       const errors = [];
-
       if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
         errors.push("Top-level value must be an object.");
         return errors;
       }
-
       if (!("saveVersion" in obj)) errors.push("Missing key: saveVersion");
       if (!("gameVersion" in obj)) errors.push("Missing key: gameVersion");
       if (!("playedTime" in obj)) errors.push("Missing key: playedTime");
       if (!("layerOne" in obj) || typeof obj.layerOne !== "object" || obj.layerOne === null) {
         errors.push("Missing object: layerOne");
       }
-
       const numericPaths = [
         { label: "playedTime", value: obj.playedTime },
         { label: "prestigeCount", value: obj.prestigeCount },
@@ -988,19 +1028,14 @@ Mahagony_Table</textarea>
         { label: "tokens", value: obj.tokens },
         { label: "layerOne.money", value: getNested(obj, "layerOne.money", NaN) }
       ];
-
       for (const item of numericPaths) {
-        if (!Number.isFinite(Number(item.value))) {
-          errors.push(`${item.label} must be a valid number.`);
-        }
+        if (!Number.isFinite(Number(item.value))) errors.push(`${item.label} must be a valid number.`);
       }
-
       return errors;
     }
 
     function formatValue(value) {
       if (value === null || value === undefined || value === "") return "—";
-      if (typeof value === "number") return Number.isInteger(value) ? String(value) : String(value);
       return String(value);
     }
 
@@ -1015,23 +1050,19 @@ Mahagony_Table</textarea>
 
     function summaryEntries(obj) {
       const achievements = Array.isArray(obj?.achievementsGotten) ? obj.achievementsGotten.length : 0;
-      const claimedAchievements = Array.isArray(obj?.achievementsClaimed) ? obj.achievementsClaimed.length : 0;
+      const dialogues = Array.isArray(obj?.dialoguesPlayed) ? obj.dialoguesPlayed.length : 0;
       const jackpots = Array.isArray(getNested(obj, "layerOne.jackpotsGotten", [])) ? getNested(obj, "layerOne.jackpotsGotten", []).length : 0;
       const superJackpots = Array.isArray(getNested(obj, "layerOne.superJackpotsGotten", [])) ? getNested(obj, "layerOne.superJackpotsGotten", []).length : 0;
 
       return [
         ["Game version", obj?.gameVersion],
-        ["Save version", obj?.saveVersion],
         ["Money", getNested(obj, "layerOne.money", "")],
         ["Prestige currency", obj?.prestigeCurrency],
-        ["Prestige count", obj?.prestigeCount],
         ["Current act", obj?.currentAct],
         ["Tokens", obj?.tokens],
-        ["Deaths", obj?.deathCount],
-        ["Loans", obj?.loanCount],
         ["Souls", getNested(obj, "layerOne.souls", "")],
         ["Achievements", achievements],
-        ["Claimed achievements", claimedAchievements],
+        ["Dialogues", dialogues],
         ["Jackpots", jackpots],
         ["Super jackpots", superJackpots]
       ];
@@ -1039,50 +1070,29 @@ Mahagony_Table</textarea>
 
     function renderSummary(container, obj) {
       if (!obj) {
-        container.innerHTML = `<div class="small">No save loaded yet.</div>`;
+        container.innerHTML = `<div class="tiny">No save loaded yet.</div>`;
         return;
       }
-
-      const html = summaryEntries(obj).map(([label, value]) => `
+      container.innerHTML = summaryEntries(obj).map(([label, value]) => `
         <div class="summary-item">
           <div class="summary-label">${escapeHtml(label)}</div>
           <div class="summary-value">${escapeHtml(formatValue(value))}</div>
         </div>
       `).join("");
-
-      container.innerHTML = html;
     }
 
-    function compareImportantFields() {
-      if (!originalSave || !currentSave) {
-        ids.changeNote.textContent = "No changes yet.";
-        return;
-      }
-
-      const checks = [
-        ["Money", "layerOne.money"],
-        ["Prestige currency", "prestigeCurrency"],
-        ["Prestige count", "prestigeCount"],
-        ["Current act", "currentAct"],
-        ["Death count", "deathCount"],
-        ["Loan count", "loanCount"],
-        ["Tokens", "tokens"],
-        ["Souls", "layerOne.souls"],
-        ["Scratch Luck", "layerOne.upgradeDataDict.Scratch Luck.buyCount"],
-        ["Scratch Bot Speed", "layerOne.upgradeDataDict.Scratch Bot Speed.buyCount"],
-        ["Scratch Bot Capacity", "layerOne.upgradeDataDict.Scratch Bot Capacity.buyCount"],
-        ["Scratch Bot Strength", "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount"],
-        ["Equipped cosmetics", "equippedCosmetics"]
-      ];
-
-      const changed = checks.filter(([_, path]) => JSON.stringify(getNested(originalSave, path, null)) !== JSON.stringify(getNested(currentSave, path, null)));
-
-      if (!changed.length) {
-        ids.changeNote.textContent = "No visible changes from the loaded save yet.";
-        return;
-      }
-
-      ids.changeNote.textContent = "Changed fields: " + changed.map(([label]) => label).join(", ");
+    function markDirty() {
+      if (!currentSave) return;
+      isDirty = JSON.stringify(currentSave) !== JSON.stringify(originalSave);
+      outputIsFresh = false;
+      ids.outputSave.value = "";
+      ids.copyOutputBtn.disabled = true;
+      ids.decodedJson.value = saveToJsonText(currentSave);
+      refreshChangedStyles();
+      renderSummary(ids.sidebarSummary, currentSave);
+      renderEquippedCosmetics();
+      updateAllDynamicUI();
+      updateStateIndicators();
     }
 
     function updateStateIndicators() {
@@ -1092,134 +1102,331 @@ Mahagony_Table</textarea>
     }
 
     function setFieldEnabled(enabled) {
-      const inputIds = fieldBindings.map(x => x.id);
-      for (const id of inputIds) {
-        ids[id].disabled = !enabled;
-      }
-
+      for (const binding of simpleBindings) ids[binding.id].disabled = !enabled;
       [
-        ids.setMaxMoneyBtn,
-        ids.addPrestigeBtn,
-        ids.setTokens999Btn,
-        ids.setDeathsZeroBtn,
-        ids.setLoansZeroBtn,
-        ids.equipRustyTrashBtn,
-        ids.equipCreamPhoneBtn,
-        ids.equipBluePhoneBtn,
-        ids.equipMahagonyTableBtn,
-        ids.generateOutputBtn,
-        ids.downloadEncodedBtn,
-        ids.downloadJsonBtn,
-        ids.validateJsonBtn,
-        ids.formatJsonBtn,
-        ids.applyJsonBtn
+        ids.setMaxMoneyBtn, ids.addPrestigeBtn, ids.setTokens999Btn, ids.setDeathsZeroBtn, ids.setLoansZeroBtn,
+        ids.generateOutputBtn, ids.downloadEncodedBtn, ids.downloadJsonBtn, ids.validateJsonBtn, ids.formatJsonBtn, ids.applyJsonBtn
       ].forEach(btn => btn.disabled = !enabled);
 
-      ids.copyOutputBtn.disabled = !(enabled && ids.outputSave.value.trim());
-    }
-
-    function markDirty() {
-      if (!currentSave) return;
-      isDirty = JSON.stringify(currentSave) !== JSON.stringify(originalSave);
-      outputIsFresh = false;
-      ids.outputSave.value = "";
-      refreshChangedStyles();
-      renderSummary(ids.currentSummary, currentSave);
-      renderEquippedCosmetics();
-      compareImportantFields();
-      updateStateIndicators();
+      document.querySelectorAll('input[data-dynamic], select[data-dynamic], textarea[data-dynamic]').forEach(el => el.disabled = !enabled);
+      document.querySelectorAll('button.tab').forEach(btn => btn.disabled = !enabled);
     }
 
     function refreshChangedStyles() {
-      for (const binding of fieldBindings) {
-        const element = ids[binding.id];
+      for (const binding of simpleBindings) {
+        const el = ids[binding.id];
         const a = originalSave ? getNested(originalSave, binding.path, "") : "";
         const b = currentSave ? getNested(currentSave, binding.path, "") : "";
-        const changed = JSON.stringify(a) !== JSON.stringify(b);
-        element.classList.toggle("changed", changed);
+        el.classList.toggle("changed", JSON.stringify(a) !== JSON.stringify(b));
       }
     }
 
-    function renderEquippedCosmetics() {
-      const cosmetics = Array.isArray(currentSave?.equippedCosmetics) ? currentSave.equippedCosmetics : [];
-      ids.equippedCosmeticsText.value = cosmetics.length ? cosmetics.join("\n") : "";
-      ids.equippedCosmeticsText.placeholder = cosmetics.length ? "" : "No cosmetics equipped in this save.";
-    }
-
-    function populateFieldsFromSave() {
+    function syncSimpleBinding(binding) {
       if (!currentSave) return;
-
-      for (const binding of fieldBindings) {
-        const value = getNested(currentSave, binding.path, "");
-        ids[binding.id].value = value ?? "";
-      }
-
-      ids.decodedJson.value = saveToJsonText(currentSave);
-      renderSummary(ids.currentSummary, currentSave);
-      renderEquippedCosmetics();
-      compareImportantFields();
-      refreshChangedStyles();
-      updateStateIndicators();
-    }
-
-    function syncFieldToSave(binding) {
-      if (!currentSave) return;
-
       const input = ids[binding.id];
       if (binding.type === "number") {
         const parsed = numericOrNull(input.value);
-        if (parsed === null) {
-          input.classList.add("changed");
-          outputIsFresh = false;
-          updateStateIndicators();
-          return;
-        }
+        if (parsed === null) return;
         setNested(currentSave, binding.path, parsed);
       } else {
         setNested(currentSave, binding.path, input.value);
       }
-
-      ids.decodedJson.value = saveToJsonText(currentSave);
       markDirty();
+    }
+
+    function populateSimpleBindings() {
+      for (const binding of simpleBindings) {
+        ids[binding.id].value = getNested(currentSave, binding.path, "") ?? "";
+      }
+    }
+
+    function buildTicketGrid() {
+      ids.ticketGrid.innerHTML = "";
+      for (const ticket of KNOWN.tickets) {
+        const card = document.createElement("div");
+        card.className = "ticket-card";
+        card.innerHTML = `
+          <div class="ticket-head">
+            <strong>${escapeHtml(ticket)}</strong>
+            <span class="tiny">XP + Level</span>
+          </div>
+          <div class="row">
+            <div>
+              <label>XP</label>
+              <input data-dynamic type="number" step="1" data-ticket="${escapeHtml(ticket)}" data-part="xp" disabled />
+            </div>
+            <div>
+              <label>Level</label>
+              <input data-dynamic type="number" step="1" data-ticket="${escapeHtml(ticket)}" data-part="level" disabled />
+            </div>
+          </div>
+        `;
+        ids.ticketGrid.appendChild(card);
+      }
+
+      ids.ticketGrid.querySelectorAll("input[data-ticket]").forEach(input => {
+        input.addEventListener("input", () => {
+          if (!currentSave) return;
+          const ticket = input.dataset.ticket;
+          const part = input.dataset.part;
+          const n = numericOrNull(input.value);
+          if (n === null) return;
+          const dict = ensureObjectAt(currentSave, "layerOne.ticketProgressionDict");
+          if (!dict[ticket] || typeof dict[ticket] !== "object") dict[ticket] = { id: ticket, xp: 0, level: 0 };
+          dict[ticket].id = ticket;
+          dict[ticket][part] = n;
+          markDirty();
+        });
+      });
+    }
+
+    function fillTicketGrid() {
+      ids.ticketGrid.querySelectorAll("input[data-ticket]").forEach(input => {
+        const ticket = input.dataset.ticket;
+        const part = input.dataset.part;
+        const value = getNested(currentSave, `layerOne.ticketProgressionDict.${ticket}.${part}`, 0);
+        input.value = value ?? 0;
+      });
+    }
+
+    function renderToggleGrid(container, values, getChecked, onChange, radioName = null) {
+      container.innerHTML = "";
+      for (const value of values) {
+        const item = document.createElement("label");
+        item.className = "toggle-item";
+        const input = document.createElement("input");
+        input.dataset.dynamic = "1";
+        input.type = radioName ? "radio" : "checkbox";
+        if (radioName) input.name = radioName;
+        input.checked = !!getChecked(value);
+        input.disabled = !currentSave;
+        input.addEventListener("change", () => onChange(value, input.checked));
+        const span = document.createElement("span");
+        span.textContent = value;
+        item.appendChild(input);
+        item.appendChild(span);
+        container.appendChild(item);
+      }
+    }
+
+    function updateTicketsArrays() {
+      renderToggleGrid(
+        ids.jackpotsGrid,
+        KNOWN.normalJackpots,
+        value => ensureArrayAt(currentSave, "layerOne.jackpotsGotten").includes(value),
+        (value, checked) => toggleArrayValue("layerOne.jackpotsGotten", value, checked)
+      );
+
+      renderToggleGrid(
+        ids.superJackpotsGrid,
+        KNOWN.superJackpots,
+        value => ensureArrayAt(currentSave, "layerOne.superJackpotsGotten").includes(value),
+        (value, checked) => toggleArrayValue("layerOne.superJackpotsGotten", value, checked)
+      );
+    }
+
+    function buildUpgradeGroups() {
+      ids.upgradeGroups.innerHTML = "";
+      Object.entries(KNOWN.upgradeGroups).forEach(([groupName, upgrades]) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `<h3>${escapeHtml(groupName)}</h3>`;
+        const grid = document.createElement("div");
+        grid.className = "grid-3";
+        upgrades.forEach(upgrade => {
+          const block = document.createElement("div");
+          block.innerHTML = `
+            <label>${escapeHtml(upgrade)}</label>
+            <input data-dynamic type="number" step="1" data-upgrade="${escapeHtml(upgrade)}" disabled />
+          `;
+          grid.appendChild(block);
+        });
+        card.appendChild(grid);
+        ids.upgradeGroups.appendChild(card);
+      });
+
+      ids.upgradeGroups.querySelectorAll("input[data-upgrade]").forEach(input => {
+        input.addEventListener("input", () => {
+          if (!currentSave) return;
+          const upgrade = input.dataset.upgrade;
+          const n = numericOrNull(input.value);
+          if (n === null) return;
+          const dict = ensureObjectAt(currentSave, "layerOne.upgradeDataDict");
+          if (!dict[upgrade] || typeof dict[upgrade] !== "object") dict[upgrade] = { id: upgrade, buyCount: 0 };
+          dict[upgrade].id = upgrade;
+          dict[upgrade].buyCount = n;
+          markDirty();
+        });
+      });
+    }
+
+    function fillUpgradeGroups() {
+      ids.upgradeGroups.querySelectorAll("input[data-upgrade]").forEach(input => {
+        const upgrade = input.dataset.upgrade;
+        input.value = getNested(currentSave, `layerOne.upgradeDataDict.${upgrade}.buyCount`, 0) ?? 0;
+      });
+    }
+
+    function buildPrestigeGrid() {
+      ids.prestigeGrid.innerHTML = "";
+      KNOWN.prestigeUpgrades.forEach(upgrade => {
+        const block = document.createElement("div");
+        block.innerHTML = `
+          <label>${escapeHtml(upgrade)}</label>
+          <input data-dynamic type="number" step="1" data-prestige-upgrade="${escapeHtml(upgrade)}" disabled />
+        `;
+        ids.prestigeGrid.appendChild(block);
+      });
+
+      ids.prestigeGrid.querySelectorAll("input[data-prestige-upgrade]").forEach(input => {
+        input.addEventListener("input", () => {
+          if (!currentSave) return;
+          const name = input.dataset.prestigeUpgrade;
+          const n = numericOrNull(input.value);
+          if (n === null) return;
+          const dict = ensureObjectAt(currentSave, "boughtPrestigeUpgrades");
+          dict[name] = n;
+          markDirty();
+        });
+      });
+    }
+
+    function fillPrestigeGrid() {
+      ids.prestigeGrid.querySelectorAll("input[data-prestige-upgrade]").forEach(input => {
+        const name = input.dataset.prestigeUpgrade;
+        input.value = getNested(currentSave, `boughtPrestigeUpgrades.${name}`, 0) ?? 0;
+      });
+    }
+
+    function toggleArrayValue(path, value, checked) {
+      if (!currentSave) return;
+      const arr = ensureArrayAt(currentSave, path);
+      const index = arr.indexOf(value);
+      if (checked && index === -1) arr.push(value);
+      if (!checked && index !== -1) arr.splice(index, 1);
+      markDirty();
+    }
+
+    function buildArraysUI() {
+      renderToggleGrid(
+        ids.achievementsGottenGrid,
+        KNOWN.achievements,
+        value => ensureArrayAt(currentSave, "achievementsGotten").includes(value),
+        (value, checked) => toggleArrayValue("achievementsGotten", value, checked)
+      );
+
+      renderToggleGrid(
+        ids.achievementsClaimedGrid,
+        KNOWN.achievements,
+        value => ensureArrayAt(currentSave, "achievementsClaimed").includes(value),
+        (value, checked) => toggleArrayValue("achievementsClaimed", value, checked)
+      );
+
+      renderToggleGrid(
+        ids.dialoguesGrid,
+        KNOWN.dialogues,
+        value => ensureArrayAt(currentSave, "dialoguesPlayed").includes(value),
+        (value, checked) => toggleArrayValue("dialoguesPlayed", value, checked)
+      );
+
+      renderToggleGrid(
+        ids.onboardingGrid,
+        KNOWN.onboarding,
+        value => ensureArrayAt(currentSave, "completedOnboardingSteps").includes(value),
+        (value, checked) => toggleArrayValue("completedOnboardingSteps", value, checked)
+      );
+
+      renderToggleGrid(
+        ids.claimedItemsGrid,
+        KNOWN.claimedItems,
+        value => ensureArrayAt(currentSave, "layerOne.claimedCustomTableItems").includes(value),
+        (value, checked) => toggleArrayValue("layerOne.claimedCustomTableItems", value, checked)
+      );
+    }
+
+    function equipCosmetic(category, cosmeticId) {
+      if (!currentSave) return;
+      const equipped = ensureArrayAt(currentSave, "equippedCosmetics");
+      const bought = ensureArrayAt(currentSave, "boughtCosmetics");
+
+      const categoryMap = {};
+      Object.entries(KNOWN.cosmetics).forEach(([cat, ids]) => ids.forEach(id => categoryMap[id] = cat));
+
+      const next = equipped.filter(id => categoryMap[id] !== category);
+      if (cosmeticId) next.push(cosmeticId);
+      currentSave.equippedCosmetics = next;
+      if (cosmeticId && !bought.includes(cosmeticId)) bought.push(cosmeticId);
+      markDirty();
+      setStatus(cosmeticId ? `Equipped ${cosmeticId}. Generate a new import string when you are ready.` : "Cosmetic cleared.");
+    }
+
+    function buildCosmeticsUI() {
+      Object.entries(KNOWN.cosmetics).forEach(([category, values]) => {
+        const container = document.getElementById(`cosmetics-${category}`);
+        const list = ["None", ...values];
+        renderToggleGrid(
+          container,
+          list,
+          value => {
+            const equipped = ensureArrayAt(currentSave, "equippedCosmetics");
+            if (value === "None") return !equipped.some(id => values.includes(id));
+            return equipped.includes(value);
+          },
+          (value, checked) => {
+            if (!checked) return;
+            equipCosmetic(category, value === "None" ? null : value);
+          },
+          `cosmetic-${category}`
+        );
+      });
+    }
+
+    function renderEquippedCosmetics() {
+      const cosmetics = Array.isArray(currentSave?.equippedCosmetics) ? currentSave.equippedCosmetics : [];
+      ids.equippedCosmeticsText.value = cosmetics.length ? cosmetics.join("\n") : "No cosmetics equipped.";
+    }
+
+    function updateAllDynamicUI() {
+      if (!currentSave) return;
+      fillTicketGrid();
+      fillUpgradeGroups();
+      fillPrestigeGrid();
+      updateTicketsArrays();
+      buildArraysUI();
+      buildCosmeticsUI();
+      renderSummary(ids.sidebarSummary, currentSave);
     }
 
     function loadSaveFromEncoded(raw) {
       clearStatus();
-
       try {
-        if (!raw || !raw.trim()) {
-          throw new Error("Paste the exported save string first.");
-        }
-
+        if (!raw || !raw.trim()) throw new Error("Paste the exported save string first.");
         const jsonText = decodeBase64Unicode(raw);
         const obj = JSON.parse(jsonText);
-
         const errors = validateSaveObject(obj);
-        if (errors.length) {
-          throw new Error("This export was decoded, but it does not look like a valid save.\n- " + errors.join("\n- "));
-        }
-
+        if (errors.length) throw new Error("This export was decoded, but it does not look like a valid save.\n- " + errors.join("\n- "));
         originalSave = clone(obj);
         currentSave = clone(obj);
         isDirty = false;
         outputIsFresh = false;
         ids.outputSave.value = "";
-
-        populateFieldsFromSave();
-        renderSummary(ids.originalSummary, originalSave);
+        populateSimpleBindings();
+        ids.decodedJson.value = saveToJsonText(currentSave);
+        updateAllDynamicUI();
+        renderEquippedCosmetics();
+        renderSummary(ids.sidebarSummary, currentSave);
         setFieldEnabled(true);
-
-        setStatus("Save loaded. Edit the values below, then generate a new import string.");
+        updateStateIndicators();
+        setStatus("Save loaded. Use the section buttons on the left to edit different parts of the save.");
       } catch (err) {
         originalSave = null;
         currentSave = null;
         isDirty = false;
         outputIsFresh = false;
         ids.outputSave.value = "";
-        renderSummary(ids.originalSummary, null);
-        renderSummary(ids.currentSummary, null);
+        ids.decodedJson.value = "";
         ids.equippedCosmeticsText.value = "";
-        ids.changeNote.textContent = "No changes yet.";
+        renderSummary(ids.sidebarSummary, null);
         setFieldEnabled(false);
         updateStateIndicators();
         setStatus("Could not load save: " + err.message, "err");
@@ -1228,18 +1435,15 @@ Mahagony_Table</textarea>
 
     function generateOutput() {
       clearStatus();
-
       if (!currentSave) {
         setStatus("Load a save first.", "warn");
         return;
       }
-
       const errors = validateSaveObject(currentSave);
       if (errors.length) {
         setStatus("Cannot generate import string until these issues are fixed:\n- " + errors.join("\n- "), "err");
         return;
       }
-
       try {
         const encoded = encodeBase64Unicode(JSON.stringify(currentSave));
         ids.outputSave.value = encoded;
@@ -1261,13 +1465,11 @@ Mahagony_Table</textarea>
       currentSave = null;
       isDirty = false;
       outputIsFresh = false;
-      for (const binding of fieldBindings) {
+      for (const binding of simpleBindings) {
         ids[binding.id].value = "";
         ids[binding.id].classList.remove("changed");
       }
-      renderSummary(ids.originalSummary, null);
-      renderSummary(ids.currentSummary, null);
-      ids.changeNote.textContent = "No changes yet.";
+      renderSummary(ids.sidebarSummary, null);
       setFieldEnabled(false);
       updateStateIndicators();
       clearStatus();
@@ -1303,7 +1505,7 @@ Mahagony_Table</textarea>
       }
       ids.saveInput.value = backup;
       loadSaveFromEncoded(backup);
-      setStatus("Browser backup restored. Edit values below, then generate a new import string.");
+      setStatus("Browser backup restored. Edit values, then generate a new import string.");
     }
 
     function clearBackup() {
@@ -1318,54 +1520,20 @@ Mahagony_Table</textarea>
 
     function initTheme() {
       const stored = localStorage.getItem(THEME_KEY);
-      if (stored === "light" || stored === "dark") {
-        setTheme(stored);
-      } else {
-        setTheme("dark");
-      }
+      if (stored === "light" || stored === "dark") setTheme(stored);
+      else setTheme("dark");
     }
 
-    function attachFieldListeners() {
-      for (const binding of fieldBindings) {
-        ids[binding.id].addEventListener("input", () => syncFieldToSave(binding));
-      }
-    }
-
-    function ensureArrayAt(obj, path) {
-      const value = getNested(obj, path, null);
-      if (!Array.isArray(value)) {
-        setNested(obj, path, []);
-      }
-      return getNested(obj, path, []);
-    }
-
-    function ensureArrayIncludes(arr, value) {
-      if (!arr.includes(value)) arr.push(value);
-    }
-
-    function cosmeticCategory(id) {
-      if (id.endsWith("_Table")) return "table";
-      if (id.includes("Trash Can")) return "trash";
-      if (id.endsWith("_Phone")) return "phone";
-      return "other";
-    }
-
-    function equipCosmetic(cosmeticId) {
-      if (!currentSave) return;
-
-      const equipped = ensureArrayAt(currentSave, "equippedCosmetics");
-      const bought = ensureArrayAt(currentSave, "boughtCosmetics");
-      const category = cosmeticCategory(cosmeticId);
-
-      const kept = equipped.filter(id => cosmeticCategory(id) !== category);
-      kept.push(cosmeticId);
-      currentSave.equippedCosmetics = kept;
-
-      ensureArrayIncludes(bought, cosmeticId);
-
-      ids.decodedJson.value = saveToJsonText(currentSave);
-      markDirty();
-      setStatus(`Equipped ${cosmeticId}. Generate a new import string when you are ready.`);
+    function initTabs() {
+      document.querySelectorAll("button.tab").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const section = btn.dataset.section;
+          document.querySelectorAll("button.tab").forEach(x => x.classList.remove("active"));
+          btn.classList.add("active");
+          document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+          document.getElementById(`section-${section}`).classList.add("active");
+        });
+      });
     }
 
     ids.themeToggle.addEventListener("click", () => {
@@ -1387,16 +1555,12 @@ Mahagony_Table</textarea>
       }
     });
 
-    ids.loadSaveBtn.addEventListener("click", () => {
-      loadSaveFromEncoded(ids.saveInput.value);
-    });
-
+    ids.loadSaveBtn.addEventListener("click", () => loadSaveFromEncoded(ids.saveInput.value));
     ids.resetEditorBtn.addEventListener("click", resetEditor);
 
     ids.saveFileInput.addEventListener("change", async (event) => {
       const file = event.target.files?.[0];
       if (!file) return;
-
       try {
         const text = await file.text();
         ids.saveInput.value = text.trim();
@@ -1410,46 +1574,40 @@ Mahagony_Table</textarea>
     ids.restoreBackupBtn.addEventListener("click", restoreBackup);
     ids.clearBackupBtn.addEventListener("click", clearBackup);
 
+    for (const binding of simpleBindings) {
+      ids[binding.id].addEventListener("input", () => syncSimpleBinding(binding));
+    }
+
     ids.setMaxMoneyBtn.addEventListener("click", () => {
-      if (!currentSave) return;
       ids.money.value = "1000000000000000";
-      syncFieldToSave({ id: "money", path: "layerOne.money", type: "number" });
+      syncSimpleBinding({ id: "money", path: "layerOne.money", type: "number" });
       setStatus("Money updated. Generate a new import string when you are ready.", "warn");
     });
 
     ids.addPrestigeBtn.addEventListener("click", () => {
-      if (!currentSave) return;
       const current = Number(ids.prestigeCurrency.value || 0);
       ids.prestigeCurrency.value = String(current + 100);
-      syncFieldToSave({ id: "prestigeCurrency", path: "prestigeCurrency", type: "number" });
+      syncSimpleBinding({ id: "prestigeCurrency", path: "prestigeCurrency", type: "number" });
       setStatus("Prestige currency increased by 100. Generate a new import string when you are ready.", "warn");
     });
 
     ids.setTokens999Btn.addEventListener("click", () => {
-      if (!currentSave) return;
       ids.tokens.value = "999";
-      syncFieldToSave({ id: "tokens", path: "tokens", type: "number" });
+      syncSimpleBinding({ id: "tokens", path: "tokens", type: "number" });
       setStatus("Tokens set to 999. Generate a new import string when you are ready.", "warn");
     });
 
     ids.setDeathsZeroBtn.addEventListener("click", () => {
-      if (!currentSave) return;
       ids.deathCount.value = "0";
-      syncFieldToSave({ id: "deathCount", path: "deathCount", type: "number" });
+      syncSimpleBinding({ id: "deathCount", path: "deathCount", type: "number" });
       setStatus("Deaths set to 0. Generate a new import string when you are ready.", "warn");
     });
 
     ids.setLoansZeroBtn.addEventListener("click", () => {
-      if (!currentSave) return;
       ids.loanCount.value = "0";
-      syncFieldToSave({ id: "loanCount", path: "loanCount", type: "number" });
+      syncSimpleBinding({ id: "loanCount", path: "loanCount", type: "number" });
       setStatus("Loans set to 0. Generate a new import string when you are ready.", "warn");
     });
-
-    ids.equipRustyTrashBtn.addEventListener("click", () => equipCosmetic("Rusty_Trash Can"));
-    ids.equipCreamPhoneBtn.addEventListener("click", () => equipCosmetic("Cream_Phone"));
-    ids.equipBluePhoneBtn.addEventListener("click", () => equipCosmetic("Blue_Phone"));
-    ids.equipMahagonyTableBtn.addEventListener("click", () => equipCosmetic("Mahagony_Table"));
 
     ids.generateOutputBtn.addEventListener("click", generateOutput);
 
@@ -1490,11 +1648,8 @@ Mahagony_Table</textarea>
       try {
         const obj = JSON.parse(ids.decodedJson.value);
         const errors = validateSaveObject(obj);
-        if (errors.length) {
-          setStatus("JSON parsed, but validation found issues:\n- " + errors.join("\n- "), "warn");
-        } else {
-          setStatus("JSON is valid and looks like a usable save.");
-        }
+        if (errors.length) setStatus("JSON parsed, but validation found issues:\n- " + errors.join("\n- "), "warn");
+        else setStatus("JSON is valid and looks like a usable save.");
       } catch (err) {
         setStatus("JSON is not valid: " + err.message, "err");
       }
@@ -1518,9 +1673,9 @@ Mahagony_Table</textarea>
           setStatus("Cannot apply raw JSON until these issues are fixed:\n- " + errors.join("\n- "), "err");
           return;
         }
-
         currentSave = clone(obj);
-        populateFieldsFromSave();
+        populateSimpleBindings();
+        updateAllDynamicUI();
         markDirty();
         setStatus("Raw JSON applied to the editor. Generate a new import string when you are ready.");
       } catch (err) {
@@ -1528,15 +1683,13 @@ Mahagony_Table</textarea>
       }
     });
 
+    buildTicketGrid();
+    buildUpgradeGroups();
+    buildPrestigeGrid();
+    initTabs();
     initTheme();
-    attachFieldListeners();
     setFieldEnabled(false);
     updateStateIndicators();
   </script>
 </body>
 </html>
-'''
-
-path = Path('/mnt/data/scritchy-scratchy-save-editor-v130d.html')
-path.write_text(html, encoding='utf-8')
-print(path)
