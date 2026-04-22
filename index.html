@@ -376,46 +376,43 @@
     .cosmetic-categories {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-      margin-top: 14px;
+      gap: 12px;
+      margin-top: 12px;
     }
 
     .cosmetic-category {
       margin: 0;
-      padding: 14px 14px 12px;
+      padding: 10px 10px 8px;
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 12px;
       background: var(--panel-2);
       min-width: 0;
     }
 
     .cosmetic-category legend {
-      padding: 0 6px;
+      padding: 0 4px;
       font-weight: 600;
-      font-size: 15px;
+      font-size: 14px;
       color: var(--text);
-    }
-
-    .cosmetic-category-blurb {
-      margin: 0 0 12px;
-      line-height: 1.45;
     }
 
     .cosmetic-options {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
+      margin-top: 8px;
     }
 
     .cosmetic-option {
       display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 10px 12px;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
       background: var(--input);
       cursor: pointer;
+      min-height: 0;
     }
 
     .cosmetic-option:has(input:disabled) {
@@ -424,7 +421,7 @@
     }
 
     .cosmetic-option input[type="radio"] {
-      margin: 3px 0 0;
+      margin: 0;
       flex: 0 0 auto;
       accent-color: var(--accent);
     }
@@ -432,18 +429,27 @@
     .cosmetic-option-body {
       min-width: 0;
       flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 4px 8px;
     }
 
     .cosmetic-option-title {
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 13px;
+      font-weight: 500;
       color: var(--text);
     }
 
+    .cosmetic-option-sep {
+      font-size: 12px;
+      color: var(--muted);
+      user-select: none;
+    }
+
     .cosmetic-option-id {
-      margin-top: 3px;
       font-size: 11px;
-      line-height: 1.35;
+      line-height: 1.25;
       color: var(--muted);
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       overflow-wrap: anywhere;
@@ -772,17 +778,14 @@
                 <div class="cosmetic-categories">
                   <fieldset class="cosmetic-category">
                     <legend>Tables</legend>
-                    <p class="cosmetic-category-blurb tiny">Scratch table appearance. Default means no table skin is equipped.</p>
                     <div id="cosmetics-table" class="cosmetic-options"></div>
                   </fieldset>
                   <fieldset class="cosmetic-category">
                     <legend>Trash cans</legend>
-                    <p class="cosmetic-category-blurb tiny">Trash can appearance. Default means no trash skin is equipped.</p>
                     <div id="cosmetics-trash" class="cosmetic-options"></div>
                   </fieldset>
                   <fieldset class="cosmetic-category">
                     <legend>Phones</legend>
-                    <p class="cosmetic-category-blurb tiny">Phone appearance. Default means no phone skin is equipped.</p>
                     <div id="cosmetics-phone" class="cosmetic-options"></div>
                   </fieldset>
                 </div>
@@ -925,9 +928,9 @@
     };
 
     const COSMETIC_CATEGORY_META = {
-      table: { noneTitle: "Default", noneIdLine: "No table cosmetic equipped for this slot." },
-      trash: { noneTitle: "Default", noneIdLine: "No trash can cosmetic equipped for this slot." },
-      phone: { noneTitle: "Default", noneIdLine: "No phone cosmetic equipped for this slot." }
+      table: { noneTitle: "Default" },
+      trash: { noneTitle: "Default" },
+      phone: { noneTitle: "Default" }
     };
 
     const $ = (id) => document.getElementById(id);
@@ -1474,20 +1477,27 @@
           });
           const body = document.createElement("div");
           body.className = "cosmetic-option-body";
-          const titleEl = document.createElement("div");
+          const titleEl = document.createElement("span");
           titleEl.className = "cosmetic-option-title";
           titleEl.textContent = titleText;
-          const idEl = document.createElement("div");
-          idEl.className = "cosmetic-option-id";
-          idEl.textContent = idLine;
           body.appendChild(titleEl);
-          body.appendChild(idEl);
+          if (idLine) {
+            const sep = document.createElement("span");
+            sep.className = "cosmetic-option-sep";
+            sep.setAttribute("aria-hidden", "true");
+            sep.textContent = "·";
+            const idEl = document.createElement("span");
+            idEl.className = "cosmetic-option-id";
+            idEl.textContent = idLine;
+            body.appendChild(sep);
+            body.appendChild(idEl);
+          }
           label.appendChild(input);
           label.appendChild(body);
           container.appendChild(label);
         }
 
-        appendOption("", meta.noneTitle, meta.noneIdLine);
+        appendOption("", meta.noneTitle);
         for (const id of ids) {
           const title = COSMETIC_LABELS[id] || id.replace(/_/g, " ");
           appendOption(id, title, id);
