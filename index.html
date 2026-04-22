@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+from pathlib import Path
+
+html = r'''<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -129,6 +131,19 @@
       margin-bottom: 4px;
     }
 
+    .version-note {
+      margin-top: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: var(--text);
+      font-size: 13px;
+    }
+
     .stack {
       display: grid;
       gap: 18px;
@@ -220,24 +235,22 @@
       gap: 12px;
     }
 
-    .row-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-    }
-
-    .row + .row,
-    .row-3 + .row,
-    .row + .row-3,
-    .field-grid + .field-grid,
-    .field-group + .field-group {
-      margin-top: 12px;
-    }
-
     .field-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
+    }
+
+    .field-grid-4 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .row + .row,
+    .field-grid + .field-grid,
+    .field-group + .field-group {
+      margin-top: 12px;
     }
 
     .field-group {
@@ -292,10 +305,6 @@
       color: white;
       border-color: transparent;
       font-weight: 600;
-    }
-
-    button.ghost {
-      background: transparent;
     }
 
     button:disabled {
@@ -438,13 +447,6 @@
       padding: 0 14px 14px;
     }
 
-    .footer {
-      margin-top: 20px;
-      padding: 12px 0 8px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
     .small {
       font-size: 12px;
       color: var(--muted);
@@ -454,11 +456,18 @@
       margin-top: 14px;
     }
 
+    .footer {
+      margin-top: 20px;
+      padding: 12px 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
     @media (max-width: 900px) {
       .guide,
       .row,
-      .row-3,
       .field-grid,
+      .field-grid-4,
       .summary-grid {
         grid-template-columns: 1fr;
       }
@@ -487,6 +496,7 @@
       <h2>Local-only tool</h2>
       <p>This editor runs entirely in your browser. Your save data is not uploaded anywhere by this page.</p>
       <p>Use one untouched export as backup before importing any edited save.</p>
+      <div class="version-note">Target game version: <strong>1.0.30d</strong></div>
 
       <div class="guide">
         <div class="guide-card">
@@ -551,7 +561,7 @@
         <div class="panel-head">
           <div>
             <h2>Edit values</h2>
-            <p class="subtle">These fields update the loaded save directly. You do not need a separate “apply” step.</p>
+            <p class="subtle">These fields update the loaded save directly. You do not need a separate apply step.</p>
           </div>
           <div class="step-badge">Step 2</div>
         </div>
@@ -666,6 +676,40 @@
         </div>
 
         <div class="field-group">
+          <h3>Cosmetics</h3>
+          <p class="field-help">These buttons equip the cosmetic and also add it to bought cosmetics if it is missing.</p>
+
+          <div class="field-grid">
+            <div>
+              <label>Currently equipped cosmetics</label>
+              <textarea id="equippedCosmeticsText" readonly placeholder="No save loaded yet."></textarea>
+            </div>
+            <div>
+              <label>Known cosmetic IDs added in this editor</label>
+              <textarea readonly>Rusty_Trash Can
+Cream_Phone
+Blue_Phone
+Mahagony_Table</textarea>
+            </div>
+          </div>
+
+          <div class="field-grid-4 spacer-top">
+            <button id="equipRustyTrashBtn" disabled>Equip Rusty Trash Can</button>
+            <button id="equipCreamPhoneBtn" disabled>Equip Cream Phone</button>
+            <button id="equipBluePhoneBtn" disabled>Equip Blue Phone</button>
+            <button id="equipMahagonyTableBtn" disabled>Equip Mahagony Table</button>
+          </div>
+
+          <div class="field-help spacer-top">
+            Cosmetic IDs used:
+            Rusty Trash Can → <span class="small">Rusty_Trash Can</span>,
+            Cream Phone → <span class="small">Cream_Phone</span>,
+            Blue Phone → <span class="small">Blue_Phone</span>,
+            Mahagony Table → <span class="small">Mahagony_Table</span>
+          </div>
+        </div>
+
+        <div class="field-group">
           <h3>Save info</h3>
           <p class="field-help">Usually leave these alone unless you know why you are changing them.</p>
 
@@ -759,7 +803,7 @@
 
     <footer class="footer">
       <div>Unofficial fan-made tool. Use at your own risk.</div>
-      <div style="margin-top:6px">Designed for local browser use on GitHub Pages.</div>
+      <div style="margin-top:6px">Designed for local browser use on GitHub Pages. Targeted at version 1.0.30d.</div>
     </footer>
   </div>
 
@@ -779,6 +823,7 @@
       originalSummary: $("originalSummary"),
       currentSummary: $("currentSummary"),
       changeNote: $("changeNote"),
+      equippedCosmeticsText: $("equippedCosmeticsText"),
 
       saveVersion: $("saveVersion"),
       gameVersion: $("gameVersion"),
@@ -814,6 +859,11 @@
       setDeathsZeroBtn: $("setDeathsZeroBtn"),
       setLoansZeroBtn: $("setLoansZeroBtn"),
 
+      equipRustyTrashBtn: $("equipRustyTrashBtn"),
+      equipCreamPhoneBtn: $("equipCreamPhoneBtn"),
+      equipBluePhoneBtn: $("equipBluePhoneBtn"),
+      equipMahagonyTableBtn: $("equipMahagonyTableBtn"),
+
       generateOutputBtn: $("generateOutputBtn"),
       copyOutputBtn: $("copyOutputBtn"),
       downloadEncodedBtn: $("downloadEncodedBtn"),
@@ -825,7 +875,7 @@
     };
 
     const BACKUP_KEY = "scritchy_scratchy_save_backup";
-    const THEME_KEY = "scritchy_scratchy_theme_v2";
+    const THEME_KEY = "scritchy_scratchy_theme_v3";
 
     let originalSave = null;
     let currentSave = null;
@@ -1021,7 +1071,8 @@
         ["Scratch Luck", "layerOne.upgradeDataDict.Scratch Luck.buyCount"],
         ["Scratch Bot Speed", "layerOne.upgradeDataDict.Scratch Bot Speed.buyCount"],
         ["Scratch Bot Capacity", "layerOne.upgradeDataDict.Scratch Bot Capacity.buyCount"],
-        ["Scratch Bot Strength", "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount"]
+        ["Scratch Bot Strength", "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount"],
+        ["Equipped cosmetics", "equippedCosmetics"]
       ];
 
       const changed = checks.filter(([_, path]) => JSON.stringify(getNested(originalSave, path, null)) !== JSON.stringify(getNested(currentSave, path, null)));
@@ -1052,6 +1103,10 @@
         ids.setTokens999Btn,
         ids.setDeathsZeroBtn,
         ids.setLoansZeroBtn,
+        ids.equipRustyTrashBtn,
+        ids.equipCreamPhoneBtn,
+        ids.equipBluePhoneBtn,
+        ids.equipMahagonyTableBtn,
         ids.generateOutputBtn,
         ids.downloadEncodedBtn,
         ids.downloadJsonBtn,
@@ -1070,6 +1125,7 @@
       ids.outputSave.value = "";
       refreshChangedStyles();
       renderSummary(ids.currentSummary, currentSave);
+      renderEquippedCosmetics();
       compareImportantFields();
       updateStateIndicators();
     }
@@ -1084,6 +1140,12 @@
       }
     }
 
+    function renderEquippedCosmetics() {
+      const cosmetics = Array.isArray(currentSave?.equippedCosmetics) ? currentSave.equippedCosmetics : [];
+      ids.equippedCosmeticsText.value = cosmetics.length ? cosmetics.join("\n") : "";
+      ids.equippedCosmeticsText.placeholder = cosmetics.length ? "" : "No cosmetics equipped in this save.";
+    }
+
     function populateFieldsFromSave() {
       if (!currentSave) return;
 
@@ -1094,6 +1156,7 @@
 
       ids.decodedJson.value = saveToJsonText(currentSave);
       renderSummary(ids.currentSummary, currentSave);
+      renderEquippedCosmetics();
       compareImportantFields();
       refreshChangedStyles();
       updateStateIndicators();
@@ -1155,6 +1218,7 @@
         ids.outputSave.value = "";
         renderSummary(ids.originalSummary, null);
         renderSummary(ids.currentSummary, null);
+        ids.equippedCosmeticsText.value = "";
         ids.changeNote.textContent = "No changes yet.";
         setFieldEnabled(false);
         updateStateIndicators();
@@ -1192,6 +1256,7 @@
       ids.saveInput.value = "";
       ids.outputSave.value = "";
       ids.decodedJson.value = "";
+      ids.equippedCosmeticsText.value = "";
       originalSave = null;
       currentSave = null;
       isDirty = false;
@@ -1264,6 +1329,43 @@
       for (const binding of fieldBindings) {
         ids[binding.id].addEventListener("input", () => syncFieldToSave(binding));
       }
+    }
+
+    function ensureArrayAt(obj, path) {
+      const value = getNested(obj, path, null);
+      if (!Array.isArray(value)) {
+        setNested(obj, path, []);
+      }
+      return getNested(obj, path, []);
+    }
+
+    function ensureArrayIncludes(arr, value) {
+      if (!arr.includes(value)) arr.push(value);
+    }
+
+    function cosmeticCategory(id) {
+      if (id.endsWith("_Table")) return "table";
+      if (id.includes("Trash Can")) return "trash";
+      if (id.endsWith("_Phone")) return "phone";
+      return "other";
+    }
+
+    function equipCosmetic(cosmeticId) {
+      if (!currentSave) return;
+
+      const equipped = ensureArrayAt(currentSave, "equippedCosmetics");
+      const bought = ensureArrayAt(currentSave, "boughtCosmetics");
+      const category = cosmeticCategory(cosmeticId);
+
+      const kept = equipped.filter(id => cosmeticCategory(id) !== category);
+      kept.push(cosmeticId);
+      currentSave.equippedCosmetics = kept;
+
+      ensureArrayIncludes(bought, cosmeticId);
+
+      ids.decodedJson.value = saveToJsonText(currentSave);
+      markDirty();
+      setStatus(`Equipped ${cosmeticId}. Generate a new import string when you are ready.`);
     }
 
     ids.themeToggle.addEventListener("click", () => {
@@ -1343,6 +1445,11 @@
       syncFieldToSave({ id: "loanCount", path: "loanCount", type: "number" });
       setStatus("Loans set to 0. Generate a new import string when you are ready.", "warn");
     });
+
+    ids.equipRustyTrashBtn.addEventListener("click", () => equipCosmetic("Rusty_Trash Can"));
+    ids.equipCreamPhoneBtn.addEventListener("click", () => equipCosmetic("Cream_Phone"));
+    ids.equipBluePhoneBtn.addEventListener("click", () => equipCosmetic("Blue_Phone"));
+    ids.equipMahagonyTableBtn.addEventListener("click", () => equipCosmetic("Mahagony_Table"));
 
     ids.generateOutputBtn.addEventListener("click", generateOutput);
 
@@ -1428,3 +1535,8 @@
   </script>
 </body>
 </html>
+'''
+
+path = Path('/mnt/data/scritchy-scratchy-save-editor-v130d.html')
+path.write_text(html, encoding='utf-8')
+print(path)
