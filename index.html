@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scritchy Scratchy Save Editor</title>
-  <meta name="description" content="Offline Scritchy Scratchy save editor. Decode, edit, and re-encode exported saves locally in your browser." />
+  <meta name="description" content="Offline Scritchy Scratchy save editor. Paste an exported save, edit values, and generate a new import string locally in your browser." />
   <meta name="theme-color" content="#ffffff" />
   <meta property="og:title" content="Scritchy Scratchy Save Editor" />
   <meta property="og:description" content="Offline browser-based save editor for Scritchy Scratchy exports." />
@@ -29,28 +29,32 @@
       --text: #e6e6e6;
       --muted: #a8b0bd;
       --accent: #6ea8fe;
+      --accent-2: #95bcff;
       --good: #62d26f;
       --bad: #ff6b6b;
       --warn: #ffd166;
       --border: #303646;
       --input: #0f131b;
       --shadow: rgba(0,0,0,0.18);
+      --changed: rgba(110,168,254,0.14);
     }
 
     body.light {
-      --bg: #f6f8fb;
+      --bg: #f5f7fb;
       --panel: #ffffff;
       --panel-2: #eef3fb;
       --panel-3: #f7f9fd;
       --text: #151922;
       --muted: #566070;
       --accent: #2f6fed;
+      --accent-2: #4f83ef;
       --good: #0d8f3c;
       --bad: #d93b3b;
       --warn: #9a6b00;
       --border: #d7deea;
       --input: #ffffff;
       --shadow: rgba(20,30,50,0.08);
+      --changed: rgba(47,111,237,0.08);
     }
 
     * { box-sizing: border-box; }
@@ -60,12 +64,12 @@
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
-      line-height: 1.45;
+      line-height: 1.5;
       transition: background 0.2s ease, color 0.2s ease;
     }
 
     .wrap {
-      max-width: 1180px;
+      max-width: 1100px;
       margin: 0 auto;
       padding: 24px;
     }
@@ -74,7 +78,7 @@
       display: flex;
       justify-content: space-between;
       gap: 16px;
-      align-items: center;
+      align-items: flex-start;
       margin-bottom: 18px;
     }
 
@@ -83,66 +87,103 @@
       line-height: 1.2;
     }
 
-    p { color: var(--muted); }
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
 
     .hero {
       background: linear-gradient(180deg, var(--panel), var(--panel-3));
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 18px;
       margin-bottom: 20px;
       box-shadow: 0 10px 30px var(--shadow);
     }
 
-    .hero p {
-      margin: 8px 0 0;
-      max-width: 880px;
+    .hero h1 {
+      margin-bottom: 10px;
     }
 
-    .notice-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
+    .hero p + p {
+      margin-top: 8px;
+    }
+
+    .guide {
       margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
     }
 
-    .notice {
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 14px;
+    .guide-card {
       background: var(--panel-3);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
     }
 
-    .notice strong {
+    .guide-card strong {
       display: block;
+      color: var(--text);
       margin-bottom: 4px;
     }
 
-    .grid {
+    .stack {
       display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      gap: 20px;
+      gap: 18px;
     }
 
     .panel {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 18px;
       box-shadow: 0 10px 30px var(--shadow);
     }
 
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .subtle {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
     textarea {
       width: 100%;
-      min-height: 260px;
+      min-height: 180px;
       resize: vertical;
       background: var(--input);
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 12px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 13px;
+      line-height: 1.45;
+    }
+
+    textarea[readonly] {
+      opacity: 0.95;
     }
 
     input, select {
@@ -150,13 +191,20 @@
       background: var(--input);
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 10px 12px;
       font-size: 14px;
+      transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
     }
 
     input[type="file"] {
       padding: 8px;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(110,168,254,0.15);
     }
 
     label {
@@ -170,31 +218,73 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin-bottom: 12px;
     }
 
     .row-3 {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 12px;
-      margin-bottom: 12px;
+    }
+
+    .row + .row,
+    .row-3 + .row,
+    .row + .row-3,
+    .field-grid + .field-grid,
+    .field-group + .field-group {
+      margin-top: 12px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field-group {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      background: var(--panel-3);
+    }
+
+    .field-group h3 {
+      margin-bottom: 4px;
+      font-size: 16px;
+    }
+
+    .field-help {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
     }
 
     .buttons {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-top: 14px;
+    }
+
+    .buttons.tight {
+      gap: 8px;
     }
 
     button {
       background: var(--panel-2);
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 10px 14px;
       cursor: pointer;
       font-size: 14px;
+      transition: filter 0.15s ease, transform 0.02s ease;
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(1.04);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
     }
 
     button.primary {
@@ -204,41 +294,144 @@
       font-weight: 600;
     }
 
-    button:hover { filter: brightness(1.04); }
+    button.ghost {
+      background: transparent;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      filter: none;
+    }
 
     .status {
       margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 10px;
+      padding: 11px 13px;
+      border-radius: 12px;
       font-size: 14px;
       display: none;
       white-space: pre-wrap;
     }
 
-    .status.ok { display: block; background: rgba(98,210,111,0.12); color: var(--good); border: 1px solid rgba(98,210,111,0.35); }
-    .status.err { display: block; background: rgba(255,107,107,0.12); color: var(--bad); border: 1px solid rgba(255,107,107,0.35); }
-    .status.warn { display: block; background: rgba(255,209,102,0.12); color: var(--warn); border: 1px solid rgba(255,209,102,0.35); }
+    .status.ok {
+      display: block;
+      background: rgba(98,210,111,0.12);
+      color: var(--good);
+      border: 1px solid rgba(98,210,111,0.35);
+    }
 
-    .tiny {
+    .status.err {
+      display: block;
+      background: rgba(255,107,107,0.12);
+      color: var(--bad);
+      border: 1px solid rgba(255,107,107,0.35);
+    }
+
+    .status.warn {
+      display: block;
+      background: rgba(255,209,102,0.12);
+      color: var(--warn);
+      border: 1px solid rgba(255,209,102,0.35);
+    }
+
+    .info-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel-3);
       font-size: 12px;
       color: var(--muted);
     }
 
-    .section-spacer { margin-top: 20px; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .pill strong {
+      color: var(--text);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .summary-box {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel-3);
+      padding: 14px;
+    }
+
+    .summary-box h3 {
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .summary-list {
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 6px;
+    }
+
+    .summary-item:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .summary-label {
+      color: var(--muted);
+    }
+
+    .summary-value {
+      text-align: right;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .changed {
+      background: var(--changed) !important;
+      border-color: var(--accent) !important;
+    }
+
+    .change-note {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
 
     details {
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       background: var(--panel-3);
-      margin-top: 14px;
+      margin-top: 16px;
       overflow: hidden;
     }
 
     details summary {
       cursor: pointer;
-      padding: 12px 14px;
+      padding: 14px;
       font-weight: 600;
+      list-style: none;
+    }
+
+    details summary::-webkit-details-marker {
+      display: none;
     }
 
     details > div {
@@ -246,24 +439,34 @@
     }
 
     .footer {
-      margin-top: 22px;
-      padding: 16px 0 10px;
+      margin-top: 20px;
+      padding: 12px 0 8px;
       color: var(--muted);
       font-size: 13px;
     }
 
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .spacer-top {
+      margin-top: 14px;
+    }
+
     @media (max-width: 900px) {
-      .grid, .notice-row, .row, .row-3 {
+      .guide,
+      .row,
+      .row-3,
+      .field-grid,
+      .summary-grid {
         grid-template-columns: 1fr;
       }
 
-      textarea {
-        min-height: 220px;
-      }
-
-      .topbar {
-        align-items: flex-start;
+      .topbar,
+      .panel-head {
         flex-direction: column;
+        align-items: stretch;
       }
     }
   </style>
@@ -273,181 +476,285 @@
     <div class="topbar">
       <div>
         <h1>Scritchy Scratchy Save Editor</h1>
-        <p>Decode, inspect, edit, and re-encode exported saves in the browser.</p>
+        <p>Paste an exported save, edit the values you want, then generate a new import string locally in your browser.</p>
       </div>
-      <div class="buttons" style="margin-top:0">
+      <div class="buttons">
         <button id="themeToggle">Toggle theme</button>
       </div>
     </div>
 
     <section class="hero">
       <h2>Local-only tool</h2>
-      <p>This editor runs entirely in your browser. Your save data is not uploaded anywhere by this page. Paste a Base64 export, decode it, edit quick fields or raw JSON, then encode it again for import back into the game.</p>
+      <p>This editor runs entirely in your browser. Your save data is not uploaded anywhere by this page.</p>
+      <p>Use one untouched export as backup before importing any edited save.</p>
 
-      <div class="notice-row">
-        <div class="notice">
-          <strong>Safer workflow</strong>
-          Keep one untouched export as backup before importing modified saves.
+      <div class="guide">
+        <div class="guide-card">
+          <strong>1. Export in game</strong>
+          The game copies your current save to clipboard.
         </div>
-        <div class="notice">
-          <strong>Unofficial tool</strong>
-          This is a fan-made editor. Broken or inconsistent values can produce invalid saves.
+        <div class="guide-card">
+          <strong>2. Edit it here</strong>
+          Paste the export, load it, and change the values you want.
+        </div>
+        <div class="guide-card">
+          <strong>3. Import in game</strong>
+          Copy the generated import string, then hold Import for 3 seconds.
         </div>
       </div>
     </section>
 
-    <div class="grid">
-      <div class="panel">
-        <h2>Save input / output</h2>
-        <label for="saveInput">Encoded save string</label>
-        <textarea id="saveInput" placeholder="Paste the exported save string here..."></textarea>
+    <div class="stack">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Paste and load save</h2>
+            <p class="subtle">Start with the exported Base64 save string from the game.</p>
+          </div>
+          <div class="step-badge">Step 1</div>
+        </div>
 
-        <div class="buttons">
-          <button class="primary" id="decodeBtn">Decode save</button>
-          <button id="encodeBtn">Encode current data</button>
-          <button id="copyBtn">Copy encoded output</button>
-          <button id="clearBtn">Clear</button>
+        <label for="saveInput">Exported save string</label>
+        <textarea id="saveInput" placeholder="Paste the exported save here..."></textarea>
+
+        <div class="buttons spacer-top">
+          <button id="pasteClipboardBtn">Paste from clipboard</button>
+          <button class="primary" id="loadSaveBtn">Load save</button>
+          <button id="resetEditorBtn">Reset editor</button>
+        </div>
+
+        <div class="spacer-top row">
+          <div>
+            <label for="saveFileInput">Load save from file</label>
+            <input id="saveFileInput" type="file" accept=".txt,.save,.json,text/plain,application/json" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <div class="buttons" style="margin-top:0">
+              <button id="saveBackupBtn">Save browser backup</button>
+              <button id="restoreBackupBtn">Restore backup</button>
+              <button id="clearBackupBtn">Delete backup</button>
+            </div>
+          </div>
         </div>
 
         <div id="status" class="status"></div>
 
-        <div class="section-spacer">
-          <h3>File tools</h3>
-          <div class="row">
+        <div class="info-strip">
+          <div class="pill"><strong>Loaded:</strong> <span id="loadedState">No</span></div>
+          <div class="pill"><strong>Changes:</strong> <span id="dirtyState">None</span></div>
+          <div class="pill"><strong>Import output:</strong> <span id="outputState">Not generated</span></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Edit values</h2>
+            <p class="subtle">These fields update the loaded save directly. You do not need a separate “apply” step.</p>
+          </div>
+          <div class="step-badge">Step 2</div>
+        </div>
+
+        <div class="field-group">
+          <h3>Currencies</h3>
+          <p class="field-help">The most commonly edited values.</p>
+
+          <div class="field-grid">
             <div>
-              <label for="saveFileInput">Load encoded save from file</label>
-              <input id="saveFileInput" type="file" accept=".txt,.save,.json,text/plain,application/json" />
+              <label for="money">Money</label>
+              <input id="money" type="number" step="any" disabled />
             </div>
             <div>
-              <label>&nbsp;</label>
-              <div class="buttons" style="margin-top:0">
-                <button id="downloadEncodedBtn">Download encoded save</button>
-                <button id="downloadJsonBtn">Download decoded JSON</button>
-              </div>
+              <label for="prestigeCurrency">Prestige currency</label>
+              <input id="prestigeCurrency" type="number" step="any" disabled />
+              <div class="field-help">Used for prestige upgrades.</div>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div>
+              <label for="tokens">Tokens</label>
+              <input id="tokens" type="number" step="any" disabled />
+            </div>
+            <div>
+              <label for="souls">Souls</label>
+              <input id="souls" type="number" step="any" disabled />
+            </div>
+          </div>
+
+          <div class="buttons tight spacer-top">
+            <button id="setMaxMoneyBtn" disabled>Set money to max</button>
+            <button id="addPrestigeBtn" disabled>Add 100 prestige</button>
+            <button id="setTokens999Btn" disabled>Set tokens to 999</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <h3>Progress</h3>
+          <p class="field-help">Changing progression values too aggressively may break save flow.</p>
+
+          <div class="field-grid">
+            <div>
+              <label for="prestigeCount">Prestige count</label>
+              <input id="prestigeCount" type="number" step="1" disabled />
+            </div>
+            <div>
+              <label for="currentAct">Current act</label>
+              <input id="currentAct" type="number" step="1" disabled />
+              <div class="field-help">May break progression if set beyond what your save supports.</div>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div>
+              <label for="deathCount">Death count</label>
+              <input id="deathCount" type="number" step="1" disabled />
+            </div>
+            <div>
+              <label for="loanCount">Loan count</label>
+              <input id="loanCount" type="number" step="1" disabled />
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div>
+              <label for="playedTime">Played time</label>
+              <input id="playedTime" type="number" step="1" disabled />
+            </div>
+            <div>
+              <label for="machineTier">Machine tier</label>
+              <input id="machineTier" type="number" step="1" disabled />
+            </div>
+          </div>
+
+          <div class="buttons tight spacer-top">
+            <button id="setDeathsZeroBtn" disabled>Set deaths to 0</button>
+            <button id="setLoansZeroBtn" disabled>Set loans to 0</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <h3>Automation upgrades</h3>
+          <p class="field-help">Quick access for the most obvious automation-related upgrades.</p>
+
+          <div class="field-grid">
+            <div>
+              <label for="scratchLuck">Scratch Luck</label>
+              <input id="scratchLuck" type="number" step="1" disabled />
+              <div class="field-help">Upgrade buyCount.</div>
+            </div>
+            <div>
+              <label for="scratchBotSpeed">Scratch Bot Speed</label>
+              <input id="scratchBotSpeed" type="number" step="1" disabled />
+              <div class="field-help">Upgrade buyCount.</div>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div>
+              <label for="scratchBotCapacity">Scratch Bot Capacity</label>
+              <input id="scratchBotCapacity" type="number" step="1" disabled />
+              <div class="field-help">Upgrade buyCount.</div>
+            </div>
+            <div>
+              <label for="scratchBotStrength">Scratch Bot Strength</label>
+              <input id="scratchBotStrength" type="number" step="1" disabled />
+              <div class="field-help">Upgrade buyCount.</div>
             </div>
           </div>
         </div>
 
-        <div class="section-spacer">
-          <label for="decodedJson">Decoded JSON</label>
-          <textarea id="decodedJson" placeholder="Decoded JSON will appear here..."></textarea>
-          <p class="tiny">You can edit the raw JSON directly. Encoding uses whatever is currently in this box.</p>
-        </div>
+        <div class="field-group">
+          <h3>Save info</h3>
+          <p class="field-help">Usually leave these alone unless you know why you are changing them.</p>
 
-        <details>
-          <summary>Backup / restore</summary>
-          <div>
-            <p class="tiny">The editor can keep one local browser backup of the original encoded save.</p>
-            <div class="buttons">
-              <button id="backupBtn">Save browser backup</button>
-              <button id="restoreBackupBtn">Restore browser backup</button>
-              <button id="clearBackupBtn">Delete browser backup</button>
+          <div class="field-grid">
+            <div>
+              <label for="gameVersion">Game version</label>
+              <input id="gameVersion" type="text" disabled />
+            </div>
+            <div>
+              <label for="saveVersion">Save version</label>
+              <input id="saveVersion" type="text" disabled />
             </div>
           </div>
-        </details>
-      </div>
 
-      <div class="panel">
-        <h2>Quick fields</h2>
-
-        <div class="row">
-          <div>
-            <label for="gameVersion">Game version</label>
-            <input id="gameVersion" type="text" />
-          </div>
-          <div>
-            <label for="saveVersion">Save version</label>
-            <input id="saveVersion" type="text" />
+          <div class="field-grid">
+            <div>
+              <label for="timestamp">Timestamp</label>
+              <input id="timestamp" type="number" step="1" disabled />
+            </div>
+            <div>
+              <label for="machineFeedCount">Machine feed count</label>
+              <input id="machineFeedCount" type="number" step="1" disabled />
+            </div>
           </div>
         </div>
 
-        <div class="row">
-          <div>
-            <label for="money">Money</label>
-            <input id="money" type="number" step="any" />
+        <div class="summary-grid">
+          <div class="summary-box">
+            <h3>Loaded save snapshot</h3>
+            <div id="originalSummary" class="summary-list">
+              <div class="small">No save loaded yet.</div>
+            </div>
           </div>
-          <div>
-            <label for="playedTime">Played time</label>
-            <input id="playedTime" type="number" step="1" />
+
+          <div class="summary-box">
+            <h3>Current edited snapshot</h3>
+            <div id="currentSummary" class="summary-list">
+              <div class="small">No save loaded yet.</div>
+            </div>
+            <div class="change-note" id="changeNote">No changes yet.</div>
           </div>
         </div>
+      </section>
 
-        <div class="row-3">
+      <section class="panel">
+        <div class="panel-head">
           <div>
-            <label for="prestigeCount">Prestige count</label>
-            <input id="prestigeCount" type="number" step="1" />
+            <h2>Generate and copy import string</h2>
+            <p class="subtle">When you are done editing, generate the final save string and copy it back to the clipboard.</p>
           </div>
-          <div>
-            <label for="prestigeCurrency">Prestige currency</label>
-            <input id="prestigeCurrency" type="number" step="1" />
-          </div>
-          <div>
-            <label for="tokens">Tokens</label>
-            <input id="tokens" type="number" step="any" />
-          </div>
-        </div>
-
-        <div class="row-3">
-          <div>
-            <label for="currentAct">Current act</label>
-            <input id="currentAct" type="number" step="1" />
-          </div>
-          <div>
-            <label for="deathCount">Death count</label>
-            <input id="deathCount" type="number" step="1" />
-          </div>
-          <div>
-            <label for="loanCount">Loan count</label>
-            <input id="loanCount" type="number" step="1" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label for="scratchLuck">Scratch Luck buyCount</label>
-            <input id="scratchLuck" type="number" step="1" />
-          </div>
-          <div>
-            <label for="scratchBotSpeed">Scratch Bot Speed buyCount</label>
-            <input id="scratchBotSpeed" type="number" step="1" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label for="scratchBotCapacity">Scratch Bot Capacity buyCount</label>
-            <input id="scratchBotCapacity" type="number" step="1" />
-          </div>
-          <div>
-            <label for="scratchBotStrength">Scratch Bot Strength buyCount</label>
-            <input id="scratchBotStrength" type="number" step="1" />
-          </div>
+          <div class="step-badge">Step 3</div>
         </div>
 
         <div class="buttons">
-          <button class="primary" id="applyFieldsBtn">Apply fields to JSON</button>
-          <button id="validateBtn">Validate JSON</button>
-          <button id="maxMoneyBtn">Set money to 1e15</button>
-          <button id="addPrestigeBtn">+100 prestige currency</button>
+          <button class="primary" id="generateOutputBtn" disabled>Generate import string</button>
+          <button id="copyOutputBtn" disabled>Copy import string</button>
+          <button id="downloadEncodedBtn" disabled>Download import string</button>
+          <button id="downloadJsonBtn" disabled>Download edited JSON</button>
         </div>
 
-        <div class="section-spacer">
-          <h3>Detected summary</h3>
-          <p class="tiny mono" id="summary">No save decoded yet.</p>
+        <div class="spacer-top">
+          <label for="outputSave">Generated import string</label>
+          <textarea id="outputSave" readonly placeholder="Your generated import string will appear here..."></textarea>
+          <p class="small">Copy this value, return to the game, then hold the Import button for 3 seconds.</p>
         </div>
+      </section>
+
+      <section class="panel">
+        <h2>Advanced</h2>
+        <p class="subtle">Use the raw JSON editor only if you want to edit fields not exposed above.</p>
 
         <details>
-          <summary>Danger zone</summary>
+          <summary>Open raw JSON editor</summary>
           <div>
-            <p class="tiny">Use these only if you understand the consequences.</p>
-            <div class="buttons">
-              <button id="resetDeathsBtn">Reset deaths to 0</button>
-              <button id="clearLoansBtn">Set loans to 0</button>
-              <button id="boostTokensBtn">Set tokens to 999</button>
+            <label for="decodedJson">Raw decoded JSON</label>
+            <textarea id="decodedJson" placeholder="Decoded JSON will appear here once a save is loaded..."></textarea>
+
+            <div class="buttons spacer-top">
+              <button id="validateJsonBtn" disabled>Validate JSON</button>
+              <button id="formatJsonBtn" disabled>Format JSON</button>
+              <button id="applyJsonBtn" disabled>Apply raw JSON to editor</button>
             </div>
+
+            <p class="small spacer-top">
+              This editor is advanced mode. If you change JSON here, click “Apply raw JSON to editor” to replace the current loaded save with your edited JSON.
+            </p>
           </div>
         </details>
-      </div>
+      </section>
     </div>
 
     <footer class="footer">
@@ -461,11 +768,21 @@
 
     const ids = {
       saveInput: $("saveInput"),
+      outputSave: $("outputSave"),
       decodedJson: $("decodedJson"),
       status: $("status"),
-      summary: $("summary"),
+
+      loadedState: $("loadedState"),
+      dirtyState: $("dirtyState"),
+      outputState: $("outputState"),
+
+      originalSummary: $("originalSummary"),
+      currentSummary: $("currentSummary"),
+      changeNote: $("changeNote"),
+
       saveVersion: $("saveVersion"),
       gameVersion: $("gameVersion"),
+      timestamp: $("timestamp"),
       money: $("money"),
       playedTime: $("playedTime"),
       prestigeCount: $("prestigeCount"),
@@ -474,14 +791,67 @@
       deathCount: $("deathCount"),
       loanCount: $("loanCount"),
       tokens: $("tokens"),
+      souls: $("souls"),
+      machineTier: $("machineTier"),
+      machineFeedCount: $("machineFeedCount"),
       scratchLuck: $("scratchLuck"),
       scratchBotSpeed: $("scratchBotSpeed"),
       scratchBotCapacity: $("scratchBotCapacity"),
-      scratchBotStrength: $("scratchBotStrength")
+      scratchBotStrength: $("scratchBotStrength"),
+
+      themeToggle: $("themeToggle"),
+      pasteClipboardBtn: $("pasteClipboardBtn"),
+      loadSaveBtn: $("loadSaveBtn"),
+      resetEditorBtn: $("resetEditorBtn"),
+      saveFileInput: $("saveFileInput"),
+      saveBackupBtn: $("saveBackupBtn"),
+      restoreBackupBtn: $("restoreBackupBtn"),
+      clearBackupBtn: $("clearBackupBtn"),
+
+      setMaxMoneyBtn: $("setMaxMoneyBtn"),
+      addPrestigeBtn: $("addPrestigeBtn"),
+      setTokens999Btn: $("setTokens999Btn"),
+      setDeathsZeroBtn: $("setDeathsZeroBtn"),
+      setLoansZeroBtn: $("setLoansZeroBtn"),
+
+      generateOutputBtn: $("generateOutputBtn"),
+      copyOutputBtn: $("copyOutputBtn"),
+      downloadEncodedBtn: $("downloadEncodedBtn"),
+      downloadJsonBtn: $("downloadJsonBtn"),
+
+      validateJsonBtn: $("validateJsonBtn"),
+      formatJsonBtn: $("formatJsonBtn"),
+      applyJsonBtn: $("applyJsonBtn")
     };
 
     const BACKUP_KEY = "scritchy_scratchy_save_backup";
-    const THEME_KEY = "scritchy_scratchy_theme";
+    const THEME_KEY = "scritchy_scratchy_theme_v2";
+
+    let originalSave = null;
+    let currentSave = null;
+    let isDirty = false;
+    let outputIsFresh = false;
+
+    const fieldBindings = [
+      { id: "saveVersion", path: "saveVersion", type: "string" },
+      { id: "gameVersion", path: "gameVersion", type: "string" },
+      { id: "timestamp", path: "timestamp", type: "number" },
+      { id: "money", path: "layerOne.money", type: "number" },
+      { id: "playedTime", path: "playedTime", type: "number" },
+      { id: "prestigeCount", path: "prestigeCount", type: "number" },
+      { id: "prestigeCurrency", path: "prestigeCurrency", type: "number" },
+      { id: "currentAct", path: "currentAct", type: "number" },
+      { id: "deathCount", path: "deathCount", type: "number" },
+      { id: "loanCount", path: "loanCount", type: "number" },
+      { id: "tokens", path: "tokens", type: "number" },
+      { id: "souls", path: "layerOne.souls", type: "number" },
+      { id: "machineTier", path: "layerOne.machineTier", type: "number" },
+      { id: "machineFeedCount", path: "layerOne.machineFeedCount", type: "number" },
+      { id: "scratchLuck", path: "layerOne.upgradeDataDict.Scratch Luck.buyCount", type: "number" },
+      { id: "scratchBotSpeed", path: "layerOne.upgradeDataDict.Scratch Bot Speed.buyCount", type: "number" },
+      { id: "scratchBotCapacity", path: "layerOne.upgradeDataDict.Scratch Bot Capacity.buyCount", type: "number" },
+      { id: "scratchBotStrength", path: "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount", type: "number" }
+    ];
 
     function setStatus(message, type = "ok") {
       ids.status.textContent = message;
@@ -503,16 +873,12 @@
     function encodeBase64Unicode(str) {
       const bytes = new TextEncoder().encode(str);
       let binary = "";
-      bytes.forEach(b => binary += String.fromCharCode(b));
+      for (const b of bytes) binary += String.fromCharCode(b);
       return btoa(binary);
     }
 
-    function getJsonFromEditor() {
-      return JSON.parse(ids.decodedJson.value);
-    }
-
-    function putJsonInEditor(obj) {
-      ids.decodedJson.value = JSON.stringify(obj, null, 2);
+    function clone(obj) {
+      return JSON.parse(JSON.stringify(obj));
     }
 
     function getNested(obj, path, fallback = "") {
@@ -537,149 +903,309 @@
       cur[parts[parts.length - 1]] = value;
     }
 
-    function numOrKeep(value, fallback) {
-      if (value === "" || value === null || value === undefined) return fallback;
+    function numericOrNull(value) {
+      if (value === "" || value === null || value === undefined) return null;
       const n = Number(value);
-      return Number.isFinite(n) ? n : fallback;
+      return Number.isFinite(n) ? n : null;
     }
 
-    function fillQuickFields(obj) {
-      ids.saveVersion.value = obj.saveVersion ?? "";
-      ids.gameVersion.value = obj.gameVersion ?? "";
-      ids.money.value = getNested(obj, "layerOne.money", "");
-      ids.playedTime.value = obj.playedTime ?? "";
-      ids.prestigeCount.value = obj.prestigeCount ?? "";
-      ids.prestigeCurrency.value = obj.prestigeCurrency ?? "";
-      ids.currentAct.value = obj.currentAct ?? "";
-      ids.deathCount.value = obj.deathCount ?? "";
-      ids.loanCount.value = obj.loanCount ?? "";
-      ids.tokens.value = obj.tokens ?? "";
-      ids.scratchLuck.value = getNested(obj, "layerOne.upgradeDataDict.Scratch Luck.buyCount", "");
-      ids.scratchBotSpeed.value = getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Speed.buyCount", "");
-      ids.scratchBotCapacity.value = getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Capacity.buyCount", "");
-      ids.scratchBotStrength.value = getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount", "");
-      renderSummary(obj);
-    }
-
-    function applyQuickFields(obj) {
-      obj.saveVersion = ids.saveVersion.value;
-      obj.gameVersion = ids.gameVersion.value;
-      obj.playedTime = numOrKeep(ids.playedTime.value, obj.playedTime);
-      obj.prestigeCount = numOrKeep(ids.prestigeCount.value, obj.prestigeCount);
-      obj.prestigeCurrency = numOrKeep(ids.prestigeCurrency.value, obj.prestigeCurrency);
-      obj.currentAct = numOrKeep(ids.currentAct.value, obj.currentAct);
-      obj.deathCount = numOrKeep(ids.deathCount.value, obj.deathCount);
-      obj.loanCount = numOrKeep(ids.loanCount.value, obj.loanCount);
-      obj.tokens = numOrKeep(ids.tokens.value, obj.tokens);
-
-      setNested(obj, "layerOne.money", numOrKeep(ids.money.value, getNested(obj, "layerOne.money", 0)));
-      setNested(obj, "layerOne.upgradeDataDict.Scratch Luck.buyCount", numOrKeep(ids.scratchLuck.value, getNested(obj, "layerOne.upgradeDataDict.Scratch Luck.buyCount", 0)));
-      setNested(obj, "layerOne.upgradeDataDict.Scratch Bot Speed.buyCount", numOrKeep(ids.scratchBotSpeed.value, getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Speed.buyCount", 0)));
-      setNested(obj, "layerOne.upgradeDataDict.Scratch Bot Capacity.buyCount", numOrKeep(ids.scratchBotCapacity.value, getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Capacity.buyCount", 0)));
-      setNested(obj, "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount", numOrKeep(ids.scratchBotStrength.value, getNested(obj, "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount", 0)));
-
-      return obj;
-    }
-
-    function renderSummary(obj) {
-      const achievements = Array.isArray(obj.achievementsGotten) ? obj.achievementsGotten.length : 0;
-      const jackpots = Array.isArray(getNested(obj, "layerOne.jackpotsGotten", [])) ? getNested(obj, "layerOne.jackpotsGotten", []).length : 0;
-      const superJackpots = Array.isArray(getNested(obj, "layerOne.superJackpotsGotten", [])) ? getNested(obj, "layerOne.superJackpotsGotten", []).length : 0;
-      const money = getNested(obj, "layerOne.money", "n/a");
-
-      ids.summary.textContent =
-        `gameVersion=${obj.gameVersion ?? "?"}\n` +
-        `saveVersion=${obj.saveVersion ?? "?"}\n` +
-        `money=${money}\n` +
-        `prestigeCount=${obj.prestigeCount ?? "?"}\n` +
-        `prestigeCurrency=${obj.prestigeCurrency ?? "?"}\n` +
-        `currentAct=${obj.currentAct ?? "?"}\n` +
-        `tokens=${obj.tokens ?? "?"}\n` +
-        `achievements=${achievements}\n` +
-        `jackpots=${jackpots}\n` +
-        `superJackpots=${superJackpots}`;
+    function saveToJsonText(obj) {
+      return JSON.stringify(obj, null, 2);
     }
 
     function validateSaveObject(obj) {
       const errors = [];
 
-      if (!obj || typeof obj !== "object") {
-        errors.push("Top level value is not an object.");
+      if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+        errors.push("Top-level value must be an object.");
         return errors;
       }
 
       if (!("saveVersion" in obj)) errors.push("Missing key: saveVersion");
       if (!("gameVersion" in obj)) errors.push("Missing key: gameVersion");
-      if (!("layerOne" in obj) || typeof obj.layerOne !== "object") errors.push("Missing object: layerOne");
-      if (!Number.isFinite(Number(getNested(obj, "layerOne.money", NaN)))) errors.push("layerOne.money must be a valid number.");
-      if (!Number.isFinite(Number(obj.playedTime))) errors.push("playedTime must be a valid number.");
-      if (!Number.isFinite(Number(obj.prestigeCount))) errors.push("prestigeCount must be a valid number.");
-      if (!Number.isFinite(Number(obj.prestigeCurrency))) errors.push("prestigeCurrency must be a valid number.");
-      if (!Number.isFinite(Number(obj.currentAct))) errors.push("currentAct must be a valid number.");
-      if (!Number.isFinite(Number(obj.deathCount))) errors.push("deathCount must be a valid number.");
-      if (!Number.isFinite(Number(obj.loanCount))) errors.push("loanCount must be a valid number.");
-      if (!Number.isFinite(Number(obj.tokens))) errors.push("tokens must be a valid number.");
+      if (!("playedTime" in obj)) errors.push("Missing key: playedTime");
+      if (!("layerOne" in obj) || typeof obj.layerOne !== "object" || obj.layerOne === null) {
+        errors.push("Missing object: layerOne");
+      }
+
+      const numericPaths = [
+        { label: "playedTime", value: obj.playedTime },
+        { label: "prestigeCount", value: obj.prestigeCount },
+        { label: "prestigeCurrency", value: obj.prestigeCurrency },
+        { label: "currentAct", value: obj.currentAct },
+        { label: "deathCount", value: obj.deathCount },
+        { label: "loanCount", value: obj.loanCount },
+        { label: "tokens", value: obj.tokens },
+        { label: "layerOne.money", value: getNested(obj, "layerOne.money", NaN) }
+      ];
+
+      for (const item of numericPaths) {
+        if (!Number.isFinite(Number(item.value))) {
+          errors.push(`${item.label} must be a valid number.`);
+        }
+      }
 
       return errors;
     }
 
-    function decodeSave() {
-      clearStatus();
-      try {
-        const raw = ids.saveInput.value.trim();
-        if (!raw) throw new Error("Paste a save string first.");
-        const jsonText = decodeBase64Unicode(raw);
-        const obj = JSON.parse(jsonText);
-        putJsonInEditor(obj);
-        fillQuickFields(obj);
+    function formatValue(value) {
+      if (value === null || value === undefined || value === "") return "—";
+      if (typeof value === "number") return Number.isInteger(value) ? String(value) : String(value);
+      return String(value);
+    }
 
-        const errors = validateSaveObject(obj);
-        if (errors.length) {
-          setStatus("Decoded, but validation found issues:\\n- " + errors.join("\\n- "), "warn");
-        } else {
-          setStatus("Save decoded successfully.");
-        }
-      } catch (err) {
-        setStatus("Decode failed: " + err.message, "err");
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function summaryEntries(obj) {
+      const achievements = Array.isArray(obj?.achievementsGotten) ? obj.achievementsGotten.length : 0;
+      const claimedAchievements = Array.isArray(obj?.achievementsClaimed) ? obj.achievementsClaimed.length : 0;
+      const jackpots = Array.isArray(getNested(obj, "layerOne.jackpotsGotten", [])) ? getNested(obj, "layerOne.jackpotsGotten", []).length : 0;
+      const superJackpots = Array.isArray(getNested(obj, "layerOne.superJackpotsGotten", [])) ? getNested(obj, "layerOne.superJackpotsGotten", []).length : 0;
+
+      return [
+        ["Game version", obj?.gameVersion],
+        ["Save version", obj?.saveVersion],
+        ["Money", getNested(obj, "layerOne.money", "")],
+        ["Prestige currency", obj?.prestigeCurrency],
+        ["Prestige count", obj?.prestigeCount],
+        ["Current act", obj?.currentAct],
+        ["Tokens", obj?.tokens],
+        ["Deaths", obj?.deathCount],
+        ["Loans", obj?.loanCount],
+        ["Souls", getNested(obj, "layerOne.souls", "")],
+        ["Achievements", achievements],
+        ["Claimed achievements", claimedAchievements],
+        ["Jackpots", jackpots],
+        ["Super jackpots", superJackpots]
+      ];
+    }
+
+    function renderSummary(container, obj) {
+      if (!obj) {
+        container.innerHTML = `<div class="small">No save loaded yet.</div>`;
+        return;
+      }
+
+      const html = summaryEntries(obj).map(([label, value]) => `
+        <div class="summary-item">
+          <div class="summary-label">${escapeHtml(label)}</div>
+          <div class="summary-value">${escapeHtml(formatValue(value))}</div>
+        </div>
+      `).join("");
+
+      container.innerHTML = html;
+    }
+
+    function compareImportantFields() {
+      if (!originalSave || !currentSave) {
+        ids.changeNote.textContent = "No changes yet.";
+        return;
+      }
+
+      const checks = [
+        ["Money", "layerOne.money"],
+        ["Prestige currency", "prestigeCurrency"],
+        ["Prestige count", "prestigeCount"],
+        ["Current act", "currentAct"],
+        ["Death count", "deathCount"],
+        ["Loan count", "loanCount"],
+        ["Tokens", "tokens"],
+        ["Souls", "layerOne.souls"],
+        ["Scratch Luck", "layerOne.upgradeDataDict.Scratch Luck.buyCount"],
+        ["Scratch Bot Speed", "layerOne.upgradeDataDict.Scratch Bot Speed.buyCount"],
+        ["Scratch Bot Capacity", "layerOne.upgradeDataDict.Scratch Bot Capacity.buyCount"],
+        ["Scratch Bot Strength", "layerOne.upgradeDataDict.Scratch Bot Strength.buyCount"]
+      ];
+
+      const changed = checks.filter(([_, path]) => JSON.stringify(getNested(originalSave, path, null)) !== JSON.stringify(getNested(currentSave, path, null)));
+
+      if (!changed.length) {
+        ids.changeNote.textContent = "No visible changes from the loaded save yet.";
+        return;
+      }
+
+      ids.changeNote.textContent = "Changed fields: " + changed.map(([label]) => label).join(", ");
+    }
+
+    function updateStateIndicators() {
+      ids.loadedState.textContent = currentSave ? "Yes" : "No";
+      ids.dirtyState.textContent = !currentSave ? "None" : (isDirty ? "Unsaved changes" : "No pending changes");
+      ids.outputState.textContent = !currentSave ? "Not generated" : (outputIsFresh ? "Up to date" : "Needs generation");
+    }
+
+    function setFieldEnabled(enabled) {
+      const inputIds = fieldBindings.map(x => x.id);
+      for (const id of inputIds) {
+        ids[id].disabled = !enabled;
+      }
+
+      [
+        ids.setMaxMoneyBtn,
+        ids.addPrestigeBtn,
+        ids.setTokens999Btn,
+        ids.setDeathsZeroBtn,
+        ids.setLoansZeroBtn,
+        ids.generateOutputBtn,
+        ids.downloadEncodedBtn,
+        ids.downloadJsonBtn,
+        ids.validateJsonBtn,
+        ids.formatJsonBtn,
+        ids.applyJsonBtn
+      ].forEach(btn => btn.disabled = !enabled);
+
+      ids.copyOutputBtn.disabled = !(enabled && ids.outputSave.value.trim());
+    }
+
+    function markDirty() {
+      if (!currentSave) return;
+      isDirty = JSON.stringify(currentSave) !== JSON.stringify(originalSave);
+      outputIsFresh = false;
+      ids.outputSave.value = "";
+      refreshChangedStyles();
+      renderSummary(ids.currentSummary, currentSave);
+      compareImportantFields();
+      updateStateIndicators();
+    }
+
+    function refreshChangedStyles() {
+      for (const binding of fieldBindings) {
+        const element = ids[binding.id];
+        const a = originalSave ? getNested(originalSave, binding.path, "") : "";
+        const b = currentSave ? getNested(currentSave, binding.path, "") : "";
+        const changed = JSON.stringify(a) !== JSON.stringify(b);
+        element.classList.toggle("changed", changed);
       }
     }
 
-    function encodeSave() {
-      clearStatus();
-      try {
-        const obj = getJsonFromEditor();
-        const errors = validateSaveObject(obj);
-        if (errors.length) {
-          setStatus("Encoding blocked. Fix these issues first:\\n- " + errors.join("\\n- "), "err");
+    function populateFieldsFromSave() {
+      if (!currentSave) return;
+
+      for (const binding of fieldBindings) {
+        const value = getNested(currentSave, binding.path, "");
+        ids[binding.id].value = value ?? "";
+      }
+
+      ids.decodedJson.value = saveToJsonText(currentSave);
+      renderSummary(ids.currentSummary, currentSave);
+      compareImportantFields();
+      refreshChangedStyles();
+      updateStateIndicators();
+    }
+
+    function syncFieldToSave(binding) {
+      if (!currentSave) return;
+
+      const input = ids[binding.id];
+      if (binding.type === "number") {
+        const parsed = numericOrNull(input.value);
+        if (parsed === null) {
+          input.classList.add("changed");
+          outputIsFresh = false;
+          updateStateIndicators();
           return;
         }
-
-        const encoded = encodeBase64Unicode(JSON.stringify(obj));
-        ids.saveInput.value = encoded;
-        renderSummary(obj);
-        setStatus("Save encoded successfully.");
-      } catch (err) {
-        setStatus("Encode failed: " + err.message, "err");
+        setNested(currentSave, binding.path, parsed);
+      } else {
+        setNested(currentSave, binding.path, input.value);
       }
+
+      ids.decodedJson.value = saveToJsonText(currentSave);
+      markDirty();
     }
 
-    function applyFields() {
+    function loadSaveFromEncoded(raw) {
       clearStatus();
+
       try {
-        const obj = getJsonFromEditor();
-        applyQuickFields(obj);
-        putJsonInEditor(obj);
-        renderSummary(obj);
+        if (!raw || !raw.trim()) {
+          throw new Error("Paste the exported save string first.");
+        }
+
+        const jsonText = decodeBase64Unicode(raw);
+        const obj = JSON.parse(jsonText);
 
         const errors = validateSaveObject(obj);
         if (errors.length) {
-          setStatus("Fields applied, but validation found issues:\\n- " + errors.join("\\n- "), "warn");
-        } else {
-          setStatus("Fields applied to JSON.");
+          throw new Error("This export was decoded, but it does not look like a valid save.\n- " + errors.join("\n- "));
         }
+
+        originalSave = clone(obj);
+        currentSave = clone(obj);
+        isDirty = false;
+        outputIsFresh = false;
+        ids.outputSave.value = "";
+
+        populateFieldsFromSave();
+        renderSummary(ids.originalSummary, originalSave);
+        setFieldEnabled(true);
+
+        setStatus("Save loaded. Edit the values below, then generate a new import string.");
       } catch (err) {
-        setStatus("Could not apply fields: " + err.message, "err");
+        originalSave = null;
+        currentSave = null;
+        isDirty = false;
+        outputIsFresh = false;
+        ids.outputSave.value = "";
+        renderSummary(ids.originalSummary, null);
+        renderSummary(ids.currentSummary, null);
+        ids.changeNote.textContent = "No changes yet.";
+        setFieldEnabled(false);
+        updateStateIndicators();
+        setStatus("Could not load save: " + err.message, "err");
       }
+    }
+
+    function generateOutput() {
+      clearStatus();
+
+      if (!currentSave) {
+        setStatus("Load a save first.", "warn");
+        return;
+      }
+
+      const errors = validateSaveObject(currentSave);
+      if (errors.length) {
+        setStatus("Cannot generate import string until these issues are fixed:\n- " + errors.join("\n- "), "err");
+        return;
+      }
+
+      try {
+        const encoded = encodeBase64Unicode(JSON.stringify(currentSave));
+        ids.outputSave.value = encoded;
+        outputIsFresh = true;
+        ids.copyOutputBtn.disabled = false;
+        updateStateIndicators();
+        setStatus("Import string ready. Copy it, return to the game, then hold Import for 3 seconds.");
+      } catch (err) {
+        setStatus("Could not generate import string: " + err.message, "err");
+      }
+    }
+
+    function resetEditor() {
+      ids.saveInput.value = "";
+      ids.outputSave.value = "";
+      ids.decodedJson.value = "";
+      originalSave = null;
+      currentSave = null;
+      isDirty = false;
+      outputIsFresh = false;
+      for (const binding of fieldBindings) {
+        ids[binding.id].value = "";
+        ids[binding.id].classList.remove("changed");
+      }
+      renderSummary(ids.originalSummary, null);
+      renderSummary(ids.currentSummary, null);
+      ids.changeNote.textContent = "No changes yet.";
+      setFieldEnabled(false);
+      updateStateIndicators();
+      clearStatus();
     }
 
     function downloadFile(filename, content, mimeType) {
@@ -697,7 +1223,7 @@
     function saveBackup() {
       const value = ids.saveInput.value.trim();
       if (!value) {
-        setStatus("Nothing to back up yet.", "warn");
+        setStatus("There is no pasted export to back up yet.", "warn");
         return;
       }
       localStorage.setItem(BACKUP_KEY, value);
@@ -711,8 +1237,8 @@
         return;
       }
       ids.saveInput.value = backup;
-      decodeSave();
-      setStatus("Browser backup restored.");
+      loadSaveFromEncoded(backup);
+      setStatus("Browser backup restored. Edit values below, then generate a new import string.");
     }
 
     function clearBackup() {
@@ -729,116 +1255,176 @@
       const stored = localStorage.getItem(THEME_KEY);
       if (stored === "light" || stored === "dark") {
         setTheme(stored);
-        return;
+      } else {
+        setTheme("dark");
       }
-      setTheme("dark");
     }
 
-    $("decodeBtn").addEventListener("click", decodeSave);
-    $("encodeBtn").addEventListener("click", encodeSave);
-    $("applyFieldsBtn").addEventListener("click", applyFields);
+    function attachFieldListeners() {
+      for (const binding of fieldBindings) {
+        ids[binding.id].addEventListener("input", () => syncFieldToSave(binding));
+      }
+    }
 
-    $("validateBtn").addEventListener("click", () => {
+    ids.themeToggle.addEventListener("click", () => {
+      const next = document.body.classList.contains("light") ? "dark" : "light";
+      setTheme(next);
+    });
+
+    ids.pasteClipboardBtn.addEventListener("click", async () => {
       try {
-        const obj = getJsonFromEditor();
-        const errors = validateSaveObject(obj);
-        if (errors.length) {
-          setStatus("Validation found issues:\\n- " + errors.join("\\n- "), "warn");
-        } else {
-          setStatus("Validation passed.");
+        const text = await navigator.clipboard.readText();
+        if (!text.trim()) {
+          setStatus("Clipboard is empty.", "warn");
+          return;
         }
+        ids.saveInput.value = text.trim();
+        setStatus("Clipboard pasted. Click “Load save” to decode it.");
       } catch (err) {
-        setStatus("Validation failed: " + err.message, "err");
+        setStatus("Could not read clipboard: " + err.message, "err");
       }
     });
 
-    $("copyBtn").addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(ids.saveInput.value);
-        setStatus("Encoded save copied to clipboard.");
-      } catch (err) {
-        setStatus("Copy failed: " + err.message, "err");
-      }
+    ids.loadSaveBtn.addEventListener("click", () => {
+      loadSaveFromEncoded(ids.saveInput.value);
     });
 
-    $("clearBtn").addEventListener("click", () => {
-      ids.saveInput.value = "";
-      ids.decodedJson.value = "";
-      ids.summary.textContent = "No save decoded yet.";
-      [
-        "saveVersion","gameVersion","money","playedTime","prestigeCount","prestigeCurrency",
-        "currentAct","deathCount","loanCount","tokens","scratchLuck","scratchBotSpeed",
-        "scratchBotCapacity","scratchBotStrength"
-      ].forEach(k => ids[k].value = "");
-      clearStatus();
-    });
+    ids.resetEditorBtn.addEventListener("click", resetEditor);
 
-    $("downloadEncodedBtn").addEventListener("click", () => {
-      const value = ids.saveInput.value.trim();
-      if (!value) {
-        setStatus("No encoded save to download.", "warn");
-        return;
-      }
-      downloadFile("scritchy-scratchy-save.txt", value, "text/plain;charset=utf-8");
-      setStatus("Encoded save downloaded.");
-    });
-
-    $("downloadJsonBtn").addEventListener("click", () => {
-      try {
-        const obj = getJsonFromEditor();
-        downloadFile("scritchy-scratchy-save.json", JSON.stringify(obj, null, 2), "application/json;charset=utf-8");
-        setStatus("Decoded JSON downloaded.");
-      } catch (err) {
-        setStatus("Could not download JSON: " + err.message, "err");
-      }
-    });
-
-    $("saveFileInput").addEventListener("change", async (event) => {
+    ids.saveFileInput.addEventListener("change", async (event) => {
       const file = event.target.files?.[0];
       if (!file) return;
+
       try {
         const text = await file.text();
         ids.saveInput.value = text.trim();
-        setStatus("File loaded into the encoded save box.");
+        setStatus("File loaded. Click “Load save” to decode it.");
       } catch (err) {
         setStatus("Could not read file: " + err.message, "err");
       }
     });
 
-    $("backupBtn").addEventListener("click", saveBackup);
-    $("restoreBackupBtn").addEventListener("click", restoreBackup);
-    $("clearBackupBtn").addEventListener("click", clearBackup);
+    ids.saveBackupBtn.addEventListener("click", saveBackup);
+    ids.restoreBackupBtn.addEventListener("click", restoreBackup);
+    ids.clearBackupBtn.addEventListener("click", clearBackup);
 
-    $("maxMoneyBtn").addEventListener("click", () => {
+    ids.setMaxMoneyBtn.addEventListener("click", () => {
+      if (!currentSave) return;
       ids.money.value = "1000000000000000";
+      syncFieldToSave({ id: "money", path: "layerOne.money", type: "number" });
+      setStatus("Money updated. Generate a new import string when you are ready.", "warn");
     });
 
-    $("addPrestigeBtn").addEventListener("click", () => {
+    ids.addPrestigeBtn.addEventListener("click", () => {
+      if (!currentSave) return;
       const current = Number(ids.prestigeCurrency.value || 0);
       ids.prestigeCurrency.value = String(current + 100);
+      syncFieldToSave({ id: "prestigeCurrency", path: "prestigeCurrency", type: "number" });
+      setStatus("Prestige currency increased by 100. Generate a new import string when you are ready.", "warn");
     });
 
-    $("resetDeathsBtn").addEventListener("click", () => {
-      ids.deathCount.value = "0";
-      setStatus("Death count field set to 0. Apply fields to commit it.", "warn");
-    });
-
-    $("clearLoansBtn").addEventListener("click", () => {
-      ids.loanCount.value = "0";
-      setStatus("Loan count field set to 0. Apply fields to commit it.", "warn");
-    });
-
-    $("boostTokensBtn").addEventListener("click", () => {
+    ids.setTokens999Btn.addEventListener("click", () => {
+      if (!currentSave) return;
       ids.tokens.value = "999";
-      setStatus("Tokens field set to 999. Apply fields to commit it.", "warn");
+      syncFieldToSave({ id: "tokens", path: "tokens", type: "number" });
+      setStatus("Tokens set to 999. Generate a new import string when you are ready.", "warn");
     });
 
-    $("themeToggle").addEventListener("click", () => {
-      const next = document.body.classList.contains("light") ? "dark" : "light";
-      setTheme(next);
+    ids.setDeathsZeroBtn.addEventListener("click", () => {
+      if (!currentSave) return;
+      ids.deathCount.value = "0";
+      syncFieldToSave({ id: "deathCount", path: "deathCount", type: "number" });
+      setStatus("Deaths set to 0. Generate a new import string when you are ready.", "warn");
+    });
+
+    ids.setLoansZeroBtn.addEventListener("click", () => {
+      if (!currentSave) return;
+      ids.loanCount.value = "0";
+      syncFieldToSave({ id: "loanCount", path: "loanCount", type: "number" });
+      setStatus("Loans set to 0. Generate a new import string when you are ready.", "warn");
+    });
+
+    ids.generateOutputBtn.addEventListener("click", generateOutput);
+
+    ids.copyOutputBtn.addEventListener("click", async () => {
+      try {
+        const text = ids.outputSave.value.trim();
+        if (!text) {
+          setStatus("Generate the import string first.", "warn");
+          return;
+        }
+        await navigator.clipboard.writeText(text);
+        setStatus("Import string copied. Return to the game and hold Import for 3 seconds.");
+      } catch (err) {
+        setStatus("Could not copy import string: " + err.message, "err");
+      }
+    });
+
+    ids.downloadEncodedBtn.addEventListener("click", () => {
+      const value = ids.outputSave.value.trim();
+      if (!value) {
+        setStatus("Generate the import string first.", "warn");
+        return;
+      }
+      downloadFile("scritchy-scratchy-import.txt", value, "text/plain;charset=utf-8");
+      setStatus("Import string downloaded.");
+    });
+
+    ids.downloadJsonBtn.addEventListener("click", () => {
+      if (!currentSave) {
+        setStatus("Load a save first.", "warn");
+        return;
+      }
+      downloadFile("scritchy-scratchy-save.json", saveToJsonText(currentSave), "application/json;charset=utf-8");
+      setStatus("Edited JSON downloaded.");
+    });
+
+    ids.validateJsonBtn.addEventListener("click", () => {
+      try {
+        const obj = JSON.parse(ids.decodedJson.value);
+        const errors = validateSaveObject(obj);
+        if (errors.length) {
+          setStatus("JSON parsed, but validation found issues:\n- " + errors.join("\n- "), "warn");
+        } else {
+          setStatus("JSON is valid and looks like a usable save.");
+        }
+      } catch (err) {
+        setStatus("JSON is not valid: " + err.message, "err");
+      }
+    });
+
+    ids.formatJsonBtn.addEventListener("click", () => {
+      try {
+        const obj = JSON.parse(ids.decodedJson.value);
+        ids.decodedJson.value = saveToJsonText(obj);
+        setStatus("Raw JSON formatted.");
+      } catch (err) {
+        setStatus("Could not format JSON: " + err.message, "err");
+      }
+    });
+
+    ids.applyJsonBtn.addEventListener("click", () => {
+      try {
+        const obj = JSON.parse(ids.decodedJson.value);
+        const errors = validateSaveObject(obj);
+        if (errors.length) {
+          setStatus("Cannot apply raw JSON until these issues are fixed:\n- " + errors.join("\n- "), "err");
+          return;
+        }
+
+        currentSave = clone(obj);
+        populateFieldsFromSave();
+        markDirty();
+        setStatus("Raw JSON applied to the editor. Generate a new import string when you are ready.");
+      } catch (err) {
+        setStatus("Could not apply raw JSON: " + err.message, "err");
+      }
     });
 
     initTheme();
+    attachFieldListeners();
+    setFieldEnabled(false);
+    updateStateIndicators();
   </script>
 </body>
 </html>
